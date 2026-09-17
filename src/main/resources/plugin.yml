@@ -1,0 +1,22 @@
+name: CustomScoreboard
+version: '1.0.0'
+main: com.spotplugins.customscoreboard.ScoreboardPlugin
+api-version: '1.21'
+author: SeuNome
+description: Scoreboard customizável com título animado e placeholders configuráveis.
+softdepend: [PlaceholderAPI, Vault]
+
+commands:
+  scoreboard:
+    description: Gerencia a scoreboard do plugin.
+    usage: /<command> <reload|on|off>
+    permission: customscoreboard.admin
+    permission-message: "&cVocê não tem permissão para usar este comando."
+
+permissions:
+  customscoreboard.admin:
+    description: Permite recarregar e administrar a scoreboard.
+    default: op
+  customscoreboard.use:
+    description: Permite ligar/desligar a própria scoreboard.
+    default: true
