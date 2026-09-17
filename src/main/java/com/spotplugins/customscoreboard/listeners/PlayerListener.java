@@ -31,7 +31,7 @@ public class PlayerListener implements Listener {
 
         // PlayerMoveEvent também ocorre apenas por rotação da câmera.
         // Só reagimos quando outro componente realmente substituiu a scoreboard.
-        if (player.getScoreboard() != plugin.getScoreboardManager().getAssignedBoard()) {
+        if (player.getScoreboard() != plugin.getScoreboardManager().getAssignedBoard(player)) {
             scheduleAssignment(player, 1L);
         }
     }
