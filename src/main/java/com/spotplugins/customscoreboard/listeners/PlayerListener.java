@@ -5,6 +5,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 
 public class PlayerListener implements Listener {
 
@@ -24,5 +25,12 @@ public class PlayerListener implements Listener {
                 plugin.getScoreboardManager().update(event.getPlayer());
             }
         }, 5L);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onMove(PlayerMoveEvent event) {
+        // PlayerMoveEvent também cobre rotação da câmera. Só reatribui quando
+        // outro componente realmente substituiu a scoreboard; não atualiza o conteúdo.
+        plugin.getScoreboardManager().ensureAssigned(event.getPlayer());
     }
 }
