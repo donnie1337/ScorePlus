@@ -56,6 +56,21 @@ public class ScoreboardManager {
         }
     }
 
+    /**
+     * Garante a atribuição da scoreboard existente sem reconstruir ou atualizar o conteúdo.
+     * Só faz alguma coisa quando outro componente substituiu a scoreboard do jogador.
+     */
+    public void ensureAssigned(Player player) {
+        if (!isEnabledFor(player)) {
+            return;
+        }
+
+        Scoreboard board = boards.get(player.getUniqueId());
+        if (board != null && player.getScoreboard() != board) {
+            player.setScoreboard(board);
+        }
+    }
+
     /** Atualiza o conteúdo quando o modo dinâmico está habilitado. */
     public void tick() {
         tickCounter++;
