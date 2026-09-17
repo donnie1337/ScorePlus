@@ -5,7 +5,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 
 public class PlayerListener implements Listener {
 
@@ -18,19 +17,11 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
         // Cria e atribui a scoreboard uma única vez após o jogador terminar de entrar.
-        // O modo dinâmico fica separado e desativado por padrão para evitar atualizações
-        // periódicas que possam causar flicker no cliente.
+        // Não há qualquer reatribuição durante movimento ou rotação da câmera.
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (event.getPlayer().isOnline()) {
                 plugin.getScoreboardManager().update(event.getPlayer());
             }
         }, 5L);
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onMove(PlayerMoveEvent event) {
-        // PlayerMoveEvent também cobre rotação da câmera. Só reatribui quando
-        // outro componente realmente substituiu a scoreboard; não atualiza o conteúdo.
-        plugin.getScoreboardManager().ensureAssigned(event.getPlayer());
     }
 }
