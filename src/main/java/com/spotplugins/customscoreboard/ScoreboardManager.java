@@ -18,9 +18,6 @@ import java.util.UUID;
 
 /**
  * Cria e atualiza a scoreboard lateral de cada jogador com base no config.yml.
- *
- * A scoreboard de cada jogador é criada no primeiro update e permanece atribuída
- * ao jogador. Não existe watchdog ou reatribuição periódica da scoreboard.
  */
 public class ScoreboardManager {
 
@@ -56,9 +53,13 @@ public class ScoreboardManager {
         }
     }
 
+    /** Retorna a scoreboard privada já criada para o jogador, sem criar uma nova. */
+    public Scoreboard getAssignedBoard(Player player) {
+        return boards.get(player.getUniqueId());
+    }
+
     /**
-     * Garante a atribuição da scoreboard existente sem reconstruir ou atualizar o conteúdo.
-     * Só faz alguma coisa quando outro componente substituiu a scoreboard do jogador.
+     * Restaura a scoreboard existente somente quando outro componente a substituiu.
      */
     public void ensureAssigned(Player player) {
         if (!isEnabledFor(player)) {
@@ -71,7 +72,7 @@ public class ScoreboardManager {
         }
     }
 
-    /** Atualiza o conteúdo quando o modo dinâmico está habilitado. */
+    /** Atualiza a scoreboard apenas quando o modo dinâmico está habilitado. */
     public void tick() {
         tickCounter++;
 
@@ -179,7 +180,6 @@ public class ScoreboardManager {
         return text.length() <= max ? text : text.substring(0, max);
     }
 
-    /** Gera uma entry invisível e única por índice de linha. */
     private String uniqueInvisibleEntry(int index) {
         ChatColor[] colors = ChatColor.values();
         ChatColor color = colors[index % colors.length];
