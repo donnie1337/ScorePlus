@@ -59,10 +59,15 @@ public class ScoreboardManager {
     /** Chamado periodicamente pela tarefa em ScoreboardPlugin. */
     public void tick() {
         tickCounter++;
-        int speed = Math.max(1, plugin.getConfig().getInt("title-animation-speed", 4));
-        List<String> frames = plugin.getConfig().getStringList("scoreboard.title-frames");
-        if (tickCounter % speed == 0 && !frames.isEmpty()) {
-            titleFrame = (titleFrame + 1) % frames.size();
+
+        // A animação do título fica desativada por padrão para evitar qualquer
+        // alteração periódica do objetivo que possa causar flicker no cliente.
+        if (plugin.getConfig().getBoolean("title-animation-enabled", false)) {
+            int speed = Math.max(1, plugin.getConfig().getInt("title-animation-speed", 4));
+            List<String> frames = plugin.getConfig().getStringList("scoreboard.title-frames");
+            if (tickCounter % speed == 0 && !frames.isEmpty()) {
+                titleFrame = (titleFrame + 1) % frames.size();
+            }
         }
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
@@ -90,7 +95,8 @@ public class ScoreboardManager {
         if (objective == null) {
             objective = board.registerNewObjective(OBJECTIVE_ID, "dummy", title);
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-        } else if (!title.equals(objective.getDisplayName())) {
+        } else if (plugin.getConfig().getBoolean("title-animation-enabled", false)
+                && !title.equals(objective.getDisplayName())) {
             objective.setDisplayName(title);
         }
 
