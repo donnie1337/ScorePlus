@@ -1,10 +1,12 @@
 package com.spotplugins.customscoreboard.listeners;
 
 import com.spotplugins.customscoreboard.ScoreboardPlugin;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 
 public class PlayerListener implements Listener {
 
@@ -16,16 +18,28 @@ public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
-        // Atribui após o join e faz uma segunda verificação depois que os demais
-        // plugins terminarem suas rotinas de entrada. Não existe reatribuição por movimento.
-        scheduleAssignment(event, 5L);
-        scheduleAssignment(event, 40L);
+        scheduleAssignment(event.getPlayer(), 5L);
+        scheduleAssignment(event.getPlayer(), 40L);
     }
 
-    private void scheduleAssignment(PlayerJoinEvent event, long delay) {
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onMove(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+        if (!player.isOnline()) {
+            return;
+        }
+
+        // Outro plugin pode substituir a scoreboard durante o movimento ou a rotação da câmera.
+        // Só fazemos a restauração quando a scoreboard realmente foi trocada.
+        if (player.getScoreboard() != plugin.getScoreboardManager().getAssignedBoard(player)) {
+            scheduleAssignment(player, 1L);
+        }
+    }
+
+    private void scheduleAssignment(Player player, long delay) {
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            if (event.getPlayer().isOnline()) {
-                plugin.getScoreboardManager().update(event.getPlayer());
+            if (player.isOnline()) {
+                plugin.getScoreboardManager().ensureAssigned(player);
             }
         }, delay);
     }
