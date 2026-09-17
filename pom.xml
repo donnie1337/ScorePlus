@@ -9,15 +9,11 @@
     <packaging>jar</packaging>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>26</maven.compiler.source>
+        <maven.compiler.target>26</maven.compiler.target>
+        <maven.compiler.release>26</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!--
-          Ajuste esta versão para bater com a versão do seu servidor Spigot/Paper.
-          Ex.: se seu servidor é 1.20.4, troque para 1.20.4-R0.1-SNAPSHOT
-          Ex.: se seu servidor é 1.21.x, mantenha como está (ou ajuste o patch).
-        -->
         <spigot.version>1.21.1-R0.1-SNAPSHOT</spigot.version>
     </properties>
 
@@ -26,12 +22,10 @@
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
-        <!-- Necessário apenas se você quiser compilar contra a API do PlaceholderAPI (opcional/soft-depend) -->
         <repository>
             <id>placeholderapi</id>
             <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
         </repository>
-        <!-- Repositório do Vault API -->
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
@@ -46,7 +40,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Opcional: só é usado via reflection/soft-depend, não é obrigatório ter instalado -->
         <dependency>
             <groupId>me.clip</groupId>
             <artifactId>placeholderapi</artifactId>
@@ -54,7 +47,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Opcional: só é usado via chamada protegida por try/catch, não é obrigatório ter instalado -->
         <dependency>
             <groupId>com.github.MilkBowl</groupId>
             <artifactId>VaultAPI</artifactId>
@@ -69,9 +61,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.14.1</version>
                 <configuration>
-                    <release>21</release>
+                    <release>26</release>
                 </configuration>
             </plugin>
         </plugins>
