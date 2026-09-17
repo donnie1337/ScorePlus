@@ -33,6 +33,11 @@ public class ScoreboardPlugin extends JavaPlugin {
     }
 
     private void startTask() {
+        if (!getConfig().getBoolean("dynamic-update-enabled", false)) {
+            this.updateTask = null;
+            return;
+        }
+
         long interval = Math.max(1L, getConfig().getLong("update-interval-ticks", 20L));
         this.updateTask = getServer().getScheduler().runTaskTimer(
                 this, scoreboardManager::tick, interval, interval);
