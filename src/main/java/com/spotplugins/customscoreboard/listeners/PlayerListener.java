@@ -16,12 +16,17 @@ public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
-        // Cria e atribui a scoreboard uma única vez após o jogador terminar de entrar.
-        // Não há qualquer reatribuição durante movimento ou rotação da câmera.
+        // Atribui após o join e faz uma segunda verificação depois que os demais
+        // plugins terminarem suas rotinas de entrada. Não existe reatribuição por movimento.
+        scheduleAssignment(event, 5L);
+        scheduleAssignment(event, 40L);
+    }
+
+    private void scheduleAssignment(PlayerJoinEvent event, long delay) {
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (event.getPlayer().isOnline()) {
                 plugin.getScoreboardManager().update(event.getPlayer());
             }
-        }, 5L);
+        }, delay);
     }
 }
