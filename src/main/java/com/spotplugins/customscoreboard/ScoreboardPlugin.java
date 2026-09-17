@@ -12,6 +12,7 @@ public class ScoreboardPlugin extends JavaPlugin {
 
     private ScoreboardManager scoreboardManager;
     private BukkitTask updateTask;
+    private BukkitTask assignmentTask;
 
     @Override
     public void onEnable() {
@@ -21,6 +22,7 @@ public class ScoreboardPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
 
         startTask();
+        startAssignmentTask();
 
         getLogger().info("CustomScoreboard ativado.");
     }
@@ -29,6 +31,9 @@ public class ScoreboardPlugin extends JavaPlugin {
     public void onDisable() {
         if (updateTask != null) {
             updateTask.cancel();
+        }
+        if (assignmentTask != null) {
+            assignmentTask.cancel();
         }
     }
 
@@ -41,6 +46,21 @@ public class ScoreboardPlugin extends JavaPlugin {
         long interval = Math.max(1L, getConfig().getLong("update-interval-ticks", 20L));
         this.updateTask = getServer().getScheduler().runTaskTimer(
                 this, scoreboardManager::tick, interval, interval);
+    }
+
+    /**
+     * Mantém a scoreboard atribuída depois do join sem recriar nem atualizar
+     * o conteúdo. Só reaplica a referência se outro sistema tiver substituído
+     * a scoreboard do jogador.
+     */
+    private void startAssignmentTask() {
+        this.assignmentTask = getServer().getScheduler().runTaskTimer(this, () -> {
+            for (Player player : getServer().getOnlinePlayers()) {
+                if (scoreboardManager.isEnabledFor(player)) {
+                    scoreboardManager.ensureAssigned(player);
+                }
+            }
+        }, 1L, 1L);
     }
 
     public ScoreboardManager getScoreboardManager() {
