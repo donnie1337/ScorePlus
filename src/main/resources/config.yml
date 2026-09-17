@@ -3,11 +3,19 @@
 #  Cores: use "&" para códigos de cor (&a, &c, &e, etc.)
 # =====================================================
 
-# A cada quantos ticks a scoreboard é atualizada (20 ticks = 1 segundo)
+# Atualização dinâmica periódica.
+# Desativada por padrão para evitar qualquer flicker no cliente.
+# Quando false, a scoreboard é montada no login e não envia pacotes de atualização periódicos.
+dynamic-update-enabled: false
+
+# A cada quantos ticks a scoreboard é atualizada quando a atualização dinâmica estiver ativa.
 update-interval-ticks: 20
 
 # A cada quantos "ciclos de atualização" o título troca de frame (animação)
 title-animation-speed: 4
+
+# Animação do título desativada por padrão.
+title-animation-enabled: false
 
 # Ativa o suporte ao PlaceholderAPI (precisa do plugin instalado no servidor)
 use-placeholderapi: true
@@ -17,8 +25,7 @@ use-vault: true
 
 scoreboard:
 
-  # Título animado: uma linha por frame, ele vai ciclando entre elas.
-  # Pode usar apenas uma linha se não quiser animação.
+  # Título. Como a animação está desativada, o primeiro frame é usado como título fixo.
   title-frames:
     - "&a&lS&2&lU&a&lR&2&lV&a&lI&2&lV&a&lA&2&lL"
     - "&2&lS&a&lU&2&lR&a&lV&2&lI&a&lV&2&lA&a&lL"
