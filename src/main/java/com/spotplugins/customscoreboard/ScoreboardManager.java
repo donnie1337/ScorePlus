@@ -19,9 +19,8 @@ import java.util.UUID;
 /**
  * Cria e atualiza a scoreboard lateral de cada jogador com base no config.yml.
  *
- * A scoreboard de cada jogador é mantida e atualizada em vez de ser recriada
- * a cada ciclo. Isso evita o efeito de piscar causado pela troca constante
- * do objeto Scoreboard no cliente.
+ * A scoreboard de cada jogador é mantida e somente os elementos que realmente
+ * mudaram são enviados ao cliente. Isso evita flicker e excesso de pacotes.
  */
 public class ScoreboardManager {
 
@@ -87,11 +86,12 @@ public class ScoreboardManager {
         }
 
         Objective objective = board.getObjective(OBJECTIVE_ID);
+        String title = currentTitle();
         if (objective == null) {
-            objective = board.registerNewObjective(OBJECTIVE_ID, "dummy", currentTitle());
+            objective = board.registerNewObjective(OBJECTIVE_ID, "dummy", title);
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-        } else {
-            objective.setDisplayName(currentTitle());
+        } else if (!title.equals(objective.getDisplayName())) {
+            objective.setDisplayName(title);
         }
 
         List<String> rawLines = plugin.getConfig().getStringList("scoreboard.lines");
@@ -104,19 +104,27 @@ public class ScoreboardManager {
 
         int size = lines.size();
         for (int i = 0; i < size; i++) {
-            String rendered = placeholders.apply(player, lines.get(i));
+            String rendered = truncate(placeholders.apply(player, lines.get(i)), 64);
             String entry = uniqueInvisibleEntry(i);
 
             Team team = board.getTeam("csb_line_" + i);
             if (team == null) {
                 team = board.registerNewTeam("csb_line_" + i);
                 team.addEntry(entry);
-            } else if (!team.hasEntry(entry)) {
-                team.addEntry(entry);
+                team.setPrefix(rendered);
+            } else {
+                if (!team.hasEntry(entry)) {
+                    team.addEntry(entry);
+                }
+                if (!rendered.equals(team.getPrefix())) {
+                    team.setPrefix(rendered);
+                }
             }
 
-            team.setPrefix(truncate(rendered, 64));
-            objective.getScore(entry).setScore(size - i);
+            int scoreValue = size - i;
+            if (!objective.getScore(entry).isScoreSet() || objective.getScore(entry).getScore() != scoreValue) {
+                objective.getScore(entry).setScore(scoreValue);
+            }
         }
 
         if (player.getScoreboard() != board) {
