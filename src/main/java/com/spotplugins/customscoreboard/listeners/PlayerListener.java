@@ -16,8 +16,13 @@ public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
-        // pequeno delay para garantir que o cliente já processou o mundo/estatísticas
-        plugin.getServer().getScheduler().runTaskLater(plugin, () ->
-                plugin.getScoreboardManager().update(event.getPlayer()), 5L);
+        // Cria e atribui a scoreboard uma única vez após o jogador terminar de entrar.
+        // O modo dinâmico fica separado e desativado por padrão para evitar atualizações
+        // periódicas que possam causar flicker no cliente.
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (event.getPlayer().isOnline()) {
+                plugin.getScoreboardManager().update(event.getPlayer());
+            }
+        }, 5L);
     }
 }
