@@ -19,8 +19,8 @@ import java.util.UUID;
 /**
  * Cria e atualiza a scoreboard lateral de cada jogador com base no config.yml.
  *
- * A scoreboard de cada jogador é mantida e somente os elementos que realmente
- * mudaram são enviados ao cliente. Isso evita flicker e excesso de pacotes.
+ * A scoreboard de cada jogador é criada no primeiro update e permanece atribuída
+ * ao jogador. Não existe watchdog ou reatribuição periódica da scoreboard.
  */
 public class ScoreboardManager {
 
@@ -72,21 +72,6 @@ public class ScoreboardManager {
             if (isEnabledFor(player)) {
                 update(player);
             }
-        }
-    }
-
-    /**
-     * Reaplica somente a referência da scoreboard caso outro plugin a substitua.
-     * Nenhuma linha ou objetivo é recriado, então isso não causa flicker.
-     */
-    public void ensureAssigned(Player player) {
-        if (!isEnabledFor(player)) {
-            return;
-        }
-
-        Scoreboard board = boards.get(player.getUniqueId());
-        if (board != null && player.getScoreboard() != board) {
-            player.setScoreboard(board);
         }
     }
 
