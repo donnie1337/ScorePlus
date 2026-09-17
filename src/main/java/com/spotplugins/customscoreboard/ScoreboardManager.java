@@ -56,12 +56,10 @@ public class ScoreboardManager {
         }
     }
 
-    /** Chamado periodicamente pela tarefa em ScoreboardPlugin. */
+    /** Atualiza o conteúdo quando o modo dinâmico está habilitado. */
     public void tick() {
         tickCounter++;
 
-        // A animação do título fica desativada por padrão para evitar qualquer
-        // alteração periódica do objetivo que possa causar flicker no cliente.
         if (plugin.getConfig().getBoolean("title-animation-enabled", false)) {
             int speed = Math.max(1, plugin.getConfig().getInt("title-animation-speed", 4));
             List<String> frames = plugin.getConfig().getStringList("scoreboard.title-frames");
@@ -74,6 +72,21 @@ public class ScoreboardManager {
             if (isEnabledFor(player)) {
                 update(player);
             }
+        }
+    }
+
+    /**
+     * Reaplica somente a referência da scoreboard caso outro plugin a substitua.
+     * Nenhuma linha ou objetivo é recriado, então isso não causa flicker.
+     */
+    public void ensureAssigned(Player player) {
+        if (!isEnabledFor(player)) {
+            return;
+        }
+
+        Scoreboard board = boards.get(player.getUniqueId());
+        if (board != null && player.getScoreboard() != board) {
+            player.setScoreboard(board);
         }
     }
 
