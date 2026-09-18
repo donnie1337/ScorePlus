@@ -3,59 +3,28 @@
 #  Cores: use "&" para códigos de cor (&a, &c, &e, etc.)
 # =====================================================
 
-# Atualização dinâmica periódica.
-# A scoreboard é atualizada a cada 1 segundo sem recriá-la.
 dynamic-update-enabled: true
-
-# 20 ticks = 1 segundo.
 update-interval-ticks: 20
-
-# A cada quantos "ciclos de atualização" o título troca de frame (animação)
 title-animation-speed: 4
-
-# Animação do título desativada por padrão.
 title-animation-enabled: false
-
-# Ativa o suporte ao PlaceholderAPI (precisa do plugin instalado no servidor)
 use-placeholderapi: true
 
 scoreboard:
-
-  # Título. Como a animação está desativada, o primeiro frame é usado como título fixo.
   title-frames:
-    - "&a&lS&2&lU&a&lR&2&lV&a&lI&2&lV&a&lA&2&lL"
-    - "&2&lS&a&lU&2&lR&a&lV&2&lI&a&lV&2&lA&a&lL"
-
-  # Linhas da scoreboard, de cima para baixo.
-  # "" = linha em branco (funciona, cada branco precisa ser único, o plugin cuida disso).
-  #
-  # Placeholders internos disponíveis:
-  #   %player%      -> nome do jogador
-  #   %world%       -> mundo atual do jogador
-  #   %online%      -> jogadores online no servidor
-  #   %maxonline%   -> slots máximos do servidor
-  #   %date%        -> data atual (dd/MM/yyyy)
-  #   %kills%       -> kills (estatística vanilla do jogador)
-  #   %deaths%      -> mortes (estatística vanilla do jogador)
-  #   %kdr%         -> kills / mortes (2 casas decimais)
-  #   %playtime%    -> horas jogadas (estatística vanilla)
-  #
-  # Além desses, se use-placeholderapi: true, você pode usar QUALQUER
-  # placeholder de qualquer expansion instalada, ex: %vault_eco_balance%,
-  # %clans_name%, %mcmmo_power_level%, etc.
-  #
-  # O ScorePlus não depende de Vault. O placeholder de economia, se usado,
-  # deve ser fornecido por PlaceholderAPI ou pela futura API econômica do servidor.
+    - "  &b❄ &a&lSURVIVAL"
 
   lines:
     - ""
-    - "&f%date%"
+    - "┌&7%player%"
+    - "    &7(&f%date%&7) "
+    - " "
+    - "  &e$ &fMoedas&7: &aMOEDAS"
+    - "  &b⚡ &fPoder&7: &bMCMMO"
+    - "  &c⚔ &fKills&7: &c%kills%"
+    - "  &4☠ &fMortes&7: &4%deaths%"
+    - "  &d⚑ &fClan&7: %clans_name%"
     - ""
-    - "&e$ &fCoins&7: &a%coins%"
-    - "&b⚡ &fNível&7: &b%mcmmo_power_level%"
-    - "&c⚔ &fKills&7: &c%kills%"
-    - "&4☠ &fMortes&7: &4%deaths%"
-    - "&f⚑ &fClã&7: %clans_name%"
-    - "&2🌍 &fMundo&7: &f%world%"
+    - " &2🌍 &fMundo&7: &2%world%"
+    - " └&e🧭 &f/rtp"
     - ""
-    - "&6&lwww.seusite.com"
+    - "    &6REDEGLOW.COM"
