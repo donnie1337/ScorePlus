@@ -21,6 +21,7 @@ public class ScoreboardPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
 
         startTask();
+        startScoreboardWatchdog();
 
         getLogger().info("CustomScoreboard ativado.");
     }
@@ -30,6 +31,20 @@ public class ScoreboardPlugin extends JavaPlugin {
         if (updateTask != null) {
             updateTask.cancel();
         }
+    }
+
+    /**
+     * Verifica a cada tick se outro plugin substituiu a scoreboard.
+     * Só reassocia quando a referência realmente mudou, evitando flicker.
+     */
+    private void startScoreboardWatchdog() {
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            for (Player player : getServer().getOnlinePlayers()) {
+                if (scoreboardManager.isEnabledFor(player)) {
+                    scoreboardManager.ensureAssigned(player);
+                }
+            }
+        }, 1L, 1L);
     }
 
     private void startTask() {
