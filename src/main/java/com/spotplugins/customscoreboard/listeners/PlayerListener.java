@@ -6,6 +6,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 public class PlayerListener implements Listener {
@@ -20,6 +21,16 @@ public class PlayerListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         // Atribui uma única vez depois que os demais handlers de entrada terminarem.
         scheduleUpdate(event.getPlayer(), 1L);
+    }
+
+    /**
+     * Alguns sistemas de câmera/movimento podem substituir a scoreboard durante
+     * atualizações do jogador. Revalida em qualquer movimento ou rotação.
+     * O ScorePlus só chama setScoreboard() se a referência realmente mudou.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = false)
+    public void onMove(PlayerMoveEvent event) {
+        plugin.getScoreboardManager().ensureAssigned(event.getPlayer());
     }
 
     @EventHandler
