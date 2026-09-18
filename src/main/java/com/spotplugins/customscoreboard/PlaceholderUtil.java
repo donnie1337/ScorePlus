@@ -1,21 +1,19 @@
 package com.spotplugins.customscoreboard;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import net.milkbowl.vault.economy.Economy;
 
+import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 /**
  * Resolve os placeholders internos do plugin e, se disponiveis,
- * delega para Vault (economia) e PlaceholderAPI (qualquer expansion instalada).
- *
- * O uso de PlaceholderAPI/Vault e feito de forma "soft": se o plugin
- * correspondente nao estiver instalado, essa parte e simplesmente ignorada,
- * sem lancar erro.
+ * delega para Vault (economia), PlaceholderAPI e integrações opcionais.
  */
 public class PlaceholderUtil {
 
@@ -57,12 +55,43 @@ public class PlaceholderUtil {
             line = line.replace("%coins%", formatCoins(getBalance(player)));
         }
 
+        // Integração nativa com ClanPlus:
+        // %clans_name% passa a mostrar a TAG do clan.
+        // Sem clan, o valor exibido é "Nenhum".
+        line = line.replace("%clans_name%", getClanTag(player));
+
         if (plugin.getConfig().getBoolean("use-placeholderapi", true)
                 && Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             line = applyPlaceholderApi(player, line);
         }
 
-        return org.bukkit.ChatColor.translateAlternateColorCodes('&', line);
+        return ChatColor.translateAlternateColorCodes('&', line);
+    }
+
+    private String getClanTag(Player player) {
+        try {
+            if (!Bukkit.getPluginManager().isPluginEnabled("ClanPlus")) {
+                return "Nenhum";
+            }
+
+            var clanPlugin = Bukkit.getPluginManager().getPlugin("ClanPlus");
+            if (clanPlugin == null) {
+                return "Nenhum";
+            }
+
+            Method method = clanPlugin.getClass().getMethod("getPlayerTag", Player.class);
+            Object result = method.invoke(clanPlugin, player);
+
+            if (result == null) {
+                return "Nenhum";
+            }
+
+            String tag = String.valueOf(result).trim();
+            return tag.isEmpty() ? "Nenhum" : tag;
+        } catch (Throwable ignored) {
+            // ClanPlus não está disponível ou sua API não pôde ser acessada.
+            return "Nenhum";
+        }
     }
 
     private int safeStatistic(Player player, Statistic statistic) {
@@ -111,7 +140,7 @@ public class PlaceholderUtil {
                 economy = provider.getProvider();
             }
         } catch (Throwable ignored) {
-            // Vault nao instalado / classe indisponivel: seguimos sem economia
+            // Vault não instalado / classe indisponível: seguimos sem economia
         }
         return economy;
     }
@@ -120,7 +149,7 @@ public class PlaceholderUtil {
         try {
             return me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, line);
         } catch (Throwable ignored) {
-            // PlaceholderAPI nao instalado / classe indisponivel: retorna a linha sem alteracao
+            // PlaceholderAPI não instalado / classe indisponível: retorna a linha sem alteração
             return line;
         }
     }
