@@ -4,7 +4,7 @@ main: com.spotplugins.customscoreboard.ScoreboardPlugin
 api-version: '1.21'
 author: SeuNome
 description: Scoreboard customizável com título animado e placeholders configuráveis.
-softdepend: [PlaceholderAPI, ViaVersion]
+softdepend: [ClanPlus, PlaceholderAPI, ViaVersion]
 
 commands:
   scoreboard:
