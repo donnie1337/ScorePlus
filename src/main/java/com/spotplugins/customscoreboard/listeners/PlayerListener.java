@@ -8,9 +8,14 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 public class PlayerListener implements Listener {
 
     private final ScoreboardPlugin plugin;
+    private final Set<UUID> pendingRestore = new HashSet<>();
 
     public PlayerListener(ScoreboardPlugin plugin) {
         this.plugin = plugin;
@@ -30,8 +35,23 @@ public class PlayerListener implements Listener {
         }
 
         // PlayerMoveEvent também ocorre apenas por rotação da câmera.
-        // ensureAssigned só reaplica a scoreboard quando ela foi realmente substituída.
-        plugin.getScoreboardManager().ensureAssigned(player);
+        // A restauração é agendada para o próximo tick para executar depois de
+        // outros plugins que possam trocar a scoreboard durante o mesmo evento.
+        scheduleRestore(player);
+    }
+
+    private void scheduleRestore(Player player) {
+        UUID id = player.getUniqueId();
+        if (!pendingRestore.add(id)) {
+            return;
+        }
+
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            pendingRestore.remove(id);
+            if (player.isOnline()) {
+                plugin.getScoreboardManager().ensureAssigned(player);
+            }
+        });
     }
 
     private void scheduleAssignment(Player player, long delay) {
