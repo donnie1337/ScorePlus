@@ -1,21 +1,14 @@
 package com.spotplugins.customscoreboard.listeners;
 
 import com.spotplugins.customscoreboard.ScoreboardPlugin;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 
 public class PlayerListener implements Listener {
 
     private final ScoreboardPlugin plugin;
-    private final Set<UUID> pendingRestore = new HashSet<>();
 
     public PlayerListener(ScoreboardPlugin plugin) {
         this.plugin = plugin;
@@ -23,40 +16,12 @@ public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
-        // No login, a board ainda não existe. Portanto, aqui precisamos
-        // montar a scoreboard, e não apenas tentar restaurá-la.
+        // Cria e atribui a scoreboard uma única vez após o login.
+        // Não fazemos nenhuma reaplicação durante movimento ou rotação da câmera.
         scheduleUpdate(event.getPlayer(), 5L);
-        scheduleUpdate(event.getPlayer(), 40L);
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onMove(PlayerMoveEvent event) {
-        Player player = event.getPlayer();
-        if (!player.isOnline()) {
-            return;
-        }
-
-        // PlayerMoveEvent também ocorre apenas por rotação da câmera.
-        // A restauração é feita no próximo tick, depois de outros plugins
-        // que possam ter alterado a scoreboard durante o mesmo evento.
-        scheduleRestore(player);
-    }
-
-    private void scheduleRestore(Player player) {
-        UUID id = player.getUniqueId();
-        if (!pendingRestore.add(id)) {
-            return;
-        }
-
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
-            pendingRestore.remove(id);
-            if (player.isOnline()) {
-                plugin.getScoreboardManager().ensureAssigned(player);
-            }
-        });
-    }
-
-    private void scheduleUpdate(Player player, long delay) {
+    private void scheduleUpdate(org.bukkit.entity.Player player, long delay) {
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (player.isOnline()) {
                 plugin.getScoreboardManager().update(player);
