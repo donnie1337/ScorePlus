@@ -144,8 +144,9 @@ public class ScoreboardManager {
             team.addEntry(entry);
             team.setPrefix(renderLine(player, lines.get(i)));
 
-            int scoreValue = lines.size() - i;
-            objective.getScore(entry).setScore(scoreValue);
+            // O valor do score existe apenas para ordenar as linhas; ele não deve
+            // aparecer visualmente no cliente. O objetivo usa entradas invisíveis
+            // e a equipe fornece todo o texto exibido na linha.
         }
     }
 
@@ -188,11 +189,8 @@ public class ScoreboardManager {
                 team.setPrefix(rendered);
             }
 
-            int scoreValue = lines.size() - i;
-            if (!objective.getScore(entry).isScoreSet()
-                    || objective.getScore(entry).getScore() != scoreValue) {
-                objective.getScore(entry).setScore(scoreValue);
-            }
+            // A pontuação já foi definida na criação da linha. Não a reescrevemos
+            // durante o update para evitar alterações visuais desnecessárias.
         }
 
         removeUnusedLines(board, lines.size());
