@@ -147,9 +147,9 @@ public class ScoreboardManager {
             team.addEntry(entry);
             team.setPrefix(renderLine(player, lines.get(i)));
 
-            // O valor do score existe apenas para ordenar as linhas; ele não deve
-            // aparecer visualmente no cliente. O objetivo usa entradas invisíveis
-            // e a equipe fornece todo o texto exibido na linha.
+            // A pontuação é necessária para manter as linhas no lugar correto.
+            // A exibição visual do número é tratada separadamente por BlankFormat.
+            objective.getScore(entry).setScore(lines.size() - i);
         }
     }
 
