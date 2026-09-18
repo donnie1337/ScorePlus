@@ -50,7 +50,6 @@ public class ScoreboardManager {
         UUID id = player.getUniqueId();
 
         if (disabled.remove(id)) {
-            // Liga: cria e atribui uma única scoreboard.
             createAndAssignBoard(player);
             return;
         }
@@ -64,30 +63,6 @@ public class ScoreboardManager {
         return boards.get(player.getUniqueId());
     }
 
-    /**
-     * Garante que a scoreboard deste jogador continua sendo a do ScorePlus.
-     * Se outro plugin trocar a scoreboard, ela é restaurada no próximo tick.
-     */
-    public void ensureAssigned(Player player) {
-        if (!isEnabledFor(player) || !player.isOnline()) {
-            return;
-        }
-
-        Scoreboard board = boards.get(player.getUniqueId());
-        if (board == null) {
-            createAndAssignBoard(player);
-            return;
-        }
-
-        if (player.getScoreboard() != board) {
-            player.setScoreboard(board);
-        }
-    }
-
-    /**
-     * Atualiza todas as informações sem trocar a scoreboard do jogador.
-     * Este método é chamado a cada 20 ticks por padrão.
-     */
     public void tick() {
         tickCounter++;
 
@@ -120,17 +95,9 @@ public class ScoreboardManager {
             return;
         }
 
-        // Se algum outro sistema substituir a scoreboard do jogador, restaura a nossa.
-        if (player.getScoreboard() != board) {
-            player.setScoreboard(board);
-        }
-
         updateBoardContents(player, board);
     }
 
-    /**
-     * Remove referências do jogador quando ele sai para evitar retenção de memória.
-     */
     public void remove(Player player) {
         UUID id = player.getUniqueId();
         boards.remove(id);
@@ -177,7 +144,6 @@ public class ScoreboardManager {
     private void updateBoardContents(Player player, Scoreboard board) {
         Objective objective = board.getObjective(OBJECTIVE_ID);
         if (objective == null) {
-            // Se outro código remover o objetivo, recria a scoreboard e a atribui novamente.
             boards.remove(player.getUniqueId());
             createAndAssignBoard(player);
             return;
@@ -191,8 +157,6 @@ public class ScoreboardManager {
 
         List<String> lines = getConfiguredLines();
 
-        // A estrutura só é corrigida quando realmente necessário.
-        // Em condições normais, o número de linhas não muda durante o tick.
         for (int i = 0; i < lines.size(); i++) {
             String entry = uniqueInvisibleEntry(i);
             Team team = board.getTeam("csb_line_" + i);
@@ -213,9 +177,6 @@ public class ScoreboardManager {
             if (!rendered.equals(team.getPrefix())) {
                 team.setPrefix(rendered);
             }
-
-            // A pontuação já foi definida na criação da linha. Não a reescrevemos
-            // durante o update para evitar alterações visuais desnecessárias.
         }
 
         removeUnusedLines(board, lines.size());
