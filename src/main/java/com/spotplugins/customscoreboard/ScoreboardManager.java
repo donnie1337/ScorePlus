@@ -65,6 +65,26 @@ public class ScoreboardManager {
     }
 
     /**
+     * Garante que a scoreboard deste jogador continua sendo a do ScorePlus.
+     * Se outro plugin trocar a scoreboard, ela é restaurada no próximo tick.
+     */
+    public void ensureAssigned(Player player) {
+        if (!isEnabledFor(player) || !player.isOnline()) {
+            return;
+        }
+
+        Scoreboard board = boards.get(player.getUniqueId());
+        if (board == null) {
+            createAndAssignBoard(player);
+            return;
+        }
+
+        if (player.getScoreboard() != board) {
+            player.setScoreboard(board);
+        }
+    }
+
+    /**
      * Atualiza todas as informações sem trocar a scoreboard do jogador.
      * Este método é chamado a cada 20 ticks por padrão.
      */
