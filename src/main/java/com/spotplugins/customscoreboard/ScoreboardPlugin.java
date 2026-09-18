@@ -12,6 +12,7 @@ public class ScoreboardPlugin extends JavaPlugin {
 
     private ScoreboardManager scoreboardManager;
     private BukkitTask updateTask;
+    private BukkitTask watchdogTask;
 
     @Override
     public void onEnable() {
@@ -21,6 +22,7 @@ public class ScoreboardPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
 
         startTask();
+        startScoreboardWatchdog();
 
         getLogger().info("CustomScoreboard ativado.");
     }
@@ -30,6 +32,25 @@ public class ScoreboardPlugin extends JavaPlugin {
         if (updateTask != null) {
             updateTask.cancel();
         }
+        if (watchdogTask != null) {
+            watchdogTask.cancel();
+        }
+    }
+
+    /**
+     * Recupera a scoreboard caso outro sistema a substitua.
+     *
+     * Não roda a cada tick: a checagem ocorre a cada 10 ticks para evitar
+     * reassociações contínuas que podem causar flicker no cliente.
+     */
+    private void startScoreboardWatchdog() {
+        this.watchdogTask = getServer().getScheduler().runTaskTimer(this, () -> {
+            for (Player player : getServer().getOnlinePlayers()) {
+                if (scoreboardManager.isEnabledFor(player)) {
+                    scoreboardManager.ensureAssigned(player);
+                }
+            }
+        }, 10L, 10L);
     }
 
     private void startTask() {
