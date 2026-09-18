@@ -61,7 +61,7 @@
                             <relocations>
                                 <relocation>
                                     <pattern>net.megavex.scoreboardlibrary</pattern>
-                                    <shadedPattern>com.spotplugins.customscoreboard.libs.scoreboardlibrary</shadedPattern>
+                                    <shadedPattern>com.spotplugins.scoreplus.libs.scoreboardlibrary</shadedPattern>
                                 </relocation>
                             </relocations>
                             <transformers>
