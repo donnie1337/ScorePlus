@@ -1,6 +1,6 @@
-name: CustomScoreboard
+name: ScorePlus
 version: '1.0.0'
-main: com.spotplugins.customscoreboard.ScoreboardPlugin
+main: com.spotplugins.scoreplus.ScorePlus
 api-version: '1.21'
 author: SeuNome
 description: Scoreboard customizável com título animado e placeholders configuráveis.
@@ -13,9 +13,9 @@ commands:
     permission-message: "&cVocê não tem permissão para usar este comando."
 
 permissions:
-  customscoreboard.admin:
+  scoreplus.admin:
     description: Permite recarregar e administrar a scoreboard.
     default: op
-  customscoreboard.use:
+  scoreplus.use:
     description: Permite ligar/desligar a própria scoreboard.
     default: true
