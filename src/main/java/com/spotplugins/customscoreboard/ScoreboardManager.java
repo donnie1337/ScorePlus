@@ -20,6 +20,8 @@ public class ScoreboardManager {
     private final PlaceholderUtil placeholders;
     private final Set<UUID> disabled = new HashSet<>();
     private final Map<UUID, Sidebar> sidebars = new ConcurrentHashMap<>();
+    private final Map<UUID, List<String>> renderedLines = new ConcurrentHashMap<>();
+    private final Map<UUID, String> renderedTitles = new ConcurrentHashMap<>();
     private final LegacyComponentSerializer legacy = LegacyComponentSerializer.legacyAmpersand();
     private ScoreboardLibrary scoreboardLibrary;
     private int titleFrame;
@@ -118,25 +120,50 @@ public class ScoreboardManager {
 
         Sidebar sidebar = scoreboardLibrary.createSidebar();
         sidebars.put(id, sidebar);
+        renderedLines.put(id, new ArrayList<>());
+        renderedTitles.remove(id);
         updateBoardContents(player, sidebar);
         sidebar.addPlayer(player);
     }
 
     private void updateBoardContents(Player player, Sidebar sidebar) {
-        sidebar.title(legacy.deserialize(currentTitle()));
+        UUID id = player.getUniqueId();
 
-        List<String> lines = getConfiguredLines();
+        String title = currentTitle();
+        String previousTitle = renderedTitles.get(id);
+        if (!title.equals(previousTitle)) {
+            sidebar.title(legacy.deserialize(title));
+            renderedTitles.put(id, title);
+        }
+
+        List<String> configuredLines = getConfiguredLines();
+        List<String> previousLines = renderedLines.computeIfAbsent(id, ignored -> new ArrayList<>());
+
         for (int i = 0; i < MAX_LINES; i++) {
-            if (i < lines.size()) {
-                sidebar.line(i, legacy.deserialize(renderLine(player, lines.get(i))));
-            } else {
-                sidebar.line(i, null);
+            String rendered = i < configuredLines.size()
+                    ? renderLine(player, configuredLines.get(i))
+                    : null;
+
+            String previous = i < previousLines.size() ? previousLines.get(i) : null;
+            if (java.util.Objects.equals(rendered, previous)) {
+                continue;
             }
+
+            sidebar.line(i, rendered == null ? null : legacy.deserialize(rendered));
+
+            while (previousLines.size() <= i) {
+                previousLines.add(null);
+            }
+            previousLines.set(i, rendered);
         }
     }
 
     private void removeSidebar(Player player) {
-        Sidebar sidebar = sidebars.remove(player.getUniqueId());
+        UUID id = player.getUniqueId();
+        Sidebar sidebar = sidebars.remove(id);
+        renderedLines.remove(id);
+        renderedTitles.remove(id);
+
         if (sidebar == null || sidebar.closed()) {
             return;
         }
