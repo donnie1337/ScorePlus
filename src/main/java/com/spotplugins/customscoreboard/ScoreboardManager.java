@@ -3,6 +3,7 @@ package com.spotplugins.customscoreboard;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -17,7 +18,12 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Cria e atualiza a scoreboard lateral de cada jogador com base no config.yml.
+ * Cria uma scoreboard privada por jogador e atualiza somente o conteúdo.
+ *
+ * A regra principal desta classe é simples:
+ * - a scoreboard é atribuída ao jogador somente quando ela é criada ou ligada;
+ * - as atualizações de 1 segundo nunca chamam setScoreboard();
+ * - objetivo, equipes e entradas são reutilizados para impedir flicker.
  */
 public class ScoreboardManager {
 
@@ -43,36 +49,26 @@ public class ScoreboardManager {
 
     public void toggle(Player player) {
         UUID id = player.getUniqueId();
-        if (disabled.contains(id)) {
-            disabled.remove(id);
-            update(player);
-        } else {
-            disabled.add(id);
-            boards.remove(id);
-            player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+
+        if (disabled.remove(id)) {
+            // Liga: cria e atribui uma única scoreboard.
+            createAndAssignBoard(player);
+            return;
         }
+
+        disabled.add(id);
+        boards.remove(id);
+        player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
     }
 
-    /** Retorna a scoreboard privada já criada para o jogador, sem criar uma nova. */
     public Scoreboard getAssignedBoard(Player player) {
         return boards.get(player.getUniqueId());
     }
 
     /**
-     * Restaura a scoreboard existente somente quando outro componente a substituiu.
+     * Atualiza todas as informações sem trocar a scoreboard do jogador.
+     * Este método é chamado a cada 20 ticks por padrão.
      */
-    public void ensureAssigned(Player player) {
-        if (!isEnabledFor(player)) {
-            return;
-        }
-
-        Scoreboard board = boards.get(player.getUniqueId());
-        if (board != null && player.getScoreboard() != board) {
-            player.setScoreboard(board);
-        }
-    }
-
-    /** Atualiza a scoreboard apenas quando o modo dinâmico está habilitado. */
     public void tick() {
         tickCounter++;
 
@@ -91,65 +87,137 @@ public class ScoreboardManager {
         }
     }
 
-    /** Atualiza a scoreboard existente ou cria uma apenas na primeira vez. */
+    /**
+     * Atualiza uma scoreboard já atribuída. Se ainda não existir, cria-a uma vez.
+     */
     public void update(Player player) {
+        if (!isEnabledFor(player) || !player.isOnline()) {
+            return;
+        }
+
+        Scoreboard board = boards.get(player.getUniqueId());
+        if (board == null) {
+            createAndAssignBoard(player);
+            return;
+        }
+
+        updateBoardContents(player, board);
+    }
+
+    /**
+     * Remove referências do jogador quando ele sai para evitar retenção de memória.
+     */
+    public void remove(Player player) {
+        UUID id = player.getUniqueId();
+        boards.remove(id);
+        disabled.remove(id);
+    }
+
+    private void createAndAssignBoard(Player player) {
         if (!isEnabledFor(player)) {
             return;
         }
 
         UUID id = player.getUniqueId();
-        Scoreboard board = boards.get(id);
-        if (board == null) {
-            board = Bukkit.getScoreboardManager().getNewScoreboard();
-            boards.put(id, board);
+        Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
+        boards.put(id, board);
+
+        buildBoard(player, board);
+
+        // IMPORTANTE: esta é a única atribuição normal da scoreboard.
+        player.setScoreboard(board);
+    }
+
+    private void buildBoard(Player player, Scoreboard board) {
+        Objective objective = board.registerNewObjective(
+                OBJECTIVE_ID,
+                "dummy",
+                currentTitle()
+        );
+        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+        List<String> lines = getConfiguredLines();
+
+        for (int i = 0; i < lines.size(); i++) {
+            String entry = uniqueInvisibleEntry(i);
+            Team team = board.registerNewTeam("csb_line_" + i);
+            team.addEntry(entry);
+            team.setPrefix(renderLine(player, lines.get(i)));
+
+            int scoreValue = lines.size() - i;
+            objective.getScore(entry).setScore(scoreValue);
+        }
+    }
+
+    private void updateBoardContents(Player player, Scoreboard board) {
+        Objective objective = board.getObjective(OBJECTIVE_ID);
+        if (objective == null) {
+            // Recuperação estrutural: isto não ocorre no fluxo normal.
+            rebuildBoard(player, board);
+            return;
         }
 
-        Objective objective = board.getObjective(OBJECTIVE_ID);
         String title = currentTitle();
-        if (objective == null) {
-            objective = board.registerNewObjective(OBJECTIVE_ID, "dummy", title);
-            objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-        } else if (plugin.getConfig().getBoolean("title-animation-enabled", false)
+        if (plugin.getConfig().getBoolean("title-animation-enabled", false)
                 && !title.equals(objective.getDisplayName())) {
             objective.setDisplayName(title);
         }
 
-        List<String> rawLines = plugin.getConfig().getStringList("scoreboard.lines");
-        List<String> lines = new ArrayList<>(rawLines);
-        if (lines.size() > MAX_LINES) {
-            lines = lines.subList(0, MAX_LINES);
-        }
+        List<String> lines = getConfiguredLines();
 
-        removeUnusedLines(board, lines.size());
-
-        int size = lines.size();
-        for (int i = 0; i < size; i++) {
-            String rendered = truncate(placeholders.apply(player, lines.get(i)), 64);
+        // A estrutura só é corrigida quando realmente necessário.
+        // Em condições normais, o número de linhas não muda durante o tick.
+        for (int i = 0; i < lines.size(); i++) {
             String entry = uniqueInvisibleEntry(i);
-
             Team team = board.getTeam("csb_line_" + i);
+
             if (team == null) {
                 team = board.registerNewTeam("csb_line_" + i);
                 team.addEntry(entry);
-                team.setPrefix(rendered);
-            } else {
-                if (!team.hasEntry(entry)) {
-                    team.addEntry(entry);
-                }
-                if (!rendered.equals(team.getPrefix())) {
-                    team.setPrefix(rendered);
-                }
+                team.setPrefix(renderLine(player, lines.get(i)));
+                objective.getScore(entry).setScore(lines.size() - i);
+                continue;
             }
 
-            int scoreValue = size - i;
-            if (!objective.getScore(entry).isScoreSet() || objective.getScore(entry).getScore() != scoreValue) {
+            if (!team.hasEntry(entry)) {
+                team.addEntry(entry);
+            }
+
+            String rendered = renderLine(player, lines.get(i));
+            if (!rendered.equals(team.getPrefix())) {
+                team.setPrefix(rendered);
+            }
+
+            int scoreValue = lines.size() - i;
+            if (!objective.getScore(entry).isScoreSet()
+                    || objective.getScore(entry).getScore() != scoreValue) {
                 objective.getScore(entry).setScore(scoreValue);
             }
         }
 
-        if (player.getScoreboard() != board) {
-            player.setScoreboard(board);
+        removeUnusedLines(board, lines.size());
+    }
+
+    private void rebuildBoard(Player player, Scoreboard board) {
+        // Somente usado se a estrutura interna da scoreboard for removida por outro código.
+        for (String teamName : new HashSet<>(board.getTeams().stream().map(Team::getName).toList())) {
+            if (teamName.startsWith("csb_line_")) {
+                Team team = board.getTeam(teamName);
+                if (team != null) {
+                    for (String entry : new HashSet<>(team.getEntries())) {
+                        board.resetScores(entry);
+                    }
+                    team.unregister();
+                }
+            }
         }
+
+        Objective old = board.getObjective(OBJECTIVE_ID);
+        if (old != null) {
+            old.unregister();
+        }
+
+        buildBoard(player, board);
     }
 
     private void removeUnusedLines(Scoreboard board, int lineCount) {
@@ -167,11 +235,28 @@ public class ScoreboardManager {
         }
     }
 
+    private List<String> getConfiguredLines() {
+        List<String> lines = new ArrayList<>(
+                plugin.getConfig().getStringList("scoreboard.lines")
+        );
+
+        if (lines.size() > MAX_LINES) {
+            return new ArrayList<>(lines.subList(0, MAX_LINES));
+        }
+
+        return lines;
+    }
+
+    private String renderLine(Player player, String line) {
+        return truncate(placeholders.apply(player, line), 64);
+    }
+
     private String currentTitle() {
         List<String> frames = plugin.getConfig().getStringList("scoreboard.title-frames");
         if (frames.isEmpty()) {
             return ChatColor.translateAlternateColorCodes('&', "&a&lSURVIVAL");
         }
+
         String frame = frames.get(titleFrame % frames.size());
         return truncate(ChatColor.translateAlternateColorCodes('&', frame), 128);
     }
