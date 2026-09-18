@@ -3,7 +3,6 @@ package com.spotplugins.customscoreboard;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -161,8 +160,6 @@ public class ScoreboardManager {
         if (objective.getDisplaySlot() != DisplaySlot.SIDEBAR) {
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
         }
-
-        hideScoreNumbers(objective);
 
         String title = currentTitle();
         if (plugin.getConfig().getBoolean("title-animation-enabled", false)
