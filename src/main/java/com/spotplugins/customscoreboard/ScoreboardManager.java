@@ -100,6 +100,11 @@ public class ScoreboardManager {
             return;
         }
 
+        // Se algum outro sistema substituir a scoreboard do jogador, restaura a nossa.
+        if (player.getScoreboard() != board) {
+            player.setScoreboard(board);
+        }
+
         updateBoardContents(player, board);
     }
 
@@ -152,13 +157,10 @@ public class ScoreboardManager {
     private void updateBoardContents(Player player, Scoreboard board) {
         Objective objective = board.getObjective(OBJECTIVE_ID);
         if (objective == null) {
-            // Recuperação estrutural: recria apenas o conteúdo da mesma scoreboard.
-            rebuildBoard(player, board);
+            // Se outro código remover o objetivo, recria a scoreboard e a atribui novamente.
+            boards.remove(player.getUniqueId());
+            createAndAssignBoard(player);
             return;
-        }
-
-        if (objective.getDisplaySlot() != DisplaySlot.SIDEBAR) {
-            objective.setDisplaySlot(DisplaySlot.SIDEBAR);
         }
 
         String title = currentTitle();
@@ -197,28 +199,6 @@ public class ScoreboardManager {
         }
 
         removeUnusedLines(board, lines.size());
-    }
-
-    private void rebuildBoard(Player player, Scoreboard board) {
-        // Somente usado se a estrutura interna da scoreboard for removida por outro código.
-        for (String teamName : new HashSet<>(board.getTeams().stream().map(Team::getName).toList())) {
-            if (teamName.startsWith("csb_line_")) {
-                Team team = board.getTeam(teamName);
-                if (team != null) {
-                    for (String entry : new HashSet<>(team.getEntries())) {
-                        board.resetScores(entry);
-                    }
-                    team.unregister();
-                }
-            }
-        }
-
-        Objective old = board.getObjective(OBJECTIVE_ID);
-        if (old != null) {
-            old.unregister();
-        }
-
-        buildBoard(player, board);
     }
 
     private void removeUnusedLines(Scoreboard board, int lineCount) {
