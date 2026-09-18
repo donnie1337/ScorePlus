@@ -32,7 +32,7 @@ public class PlaceholderUtil {
         String line = rawLine;
 
         line = line.replace("%player%", player.getName());
-        line = line.replace("%world%", capitalizeWorldName(player.getWorld().getName()));
+        line = line.replace("%world%", formatWorldName(player.getWorld().getName()));
         line = line.replace("%online%", String.valueOf(Bukkit.getOnlinePlayers().size()));
         line = line.replace("%maxonline%", String.valueOf(Bukkit.getMaxPlayers()));
         line = line.replace("%date%", LocalDate.now().format(DATE_FORMAT));
@@ -60,7 +60,19 @@ public class PlaceholderUtil {
         return ChatColor.translateAlternateColorCodes('&', line);
     }
 
-    private String capitalizeWorldName(String worldName) {\n        if (worldName == null || worldName.isEmpty()) {\n            return worldName;\n        }\n        return Character.toUpperCase(worldName.charAt(0)) + worldName.substring(1);\n    }\n\n    private String getClanTag(Player player) {
+    private String formatWorldName(String worldName) {
+        if (worldName == null || worldName.isEmpty()) {
+            return worldName;
+        }
+
+        return switch (worldName.toLowerCase()) {
+            case "world_nether" -> "Nether";
+            case "world_the_end" -> "End";
+            default -> Character.toUpperCase(worldName.charAt(0)) + worldName.substring(1);
+        };
+    }
+
+    private String getClanTag(Player player) {
         try {
             if (!Bukkit.getPluginManager().isPluginEnabled("ClanPlus")) {
                 return "Nenhum";
