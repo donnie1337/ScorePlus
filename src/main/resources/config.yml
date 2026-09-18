@@ -19,9 +19,6 @@ title-animation-enabled: false
 # Ativa o suporte ao PlaceholderAPI (precisa do plugin instalado no servidor)
 use-placeholderapi: true
 
-# Ativa o suporte à Vault para exibir saldo de economia no placeholder %coins%
-use-vault: true
-
 scoreboard:
 
   # Título. Como a animação está desativada, o primeiro frame é usado como título fixo.
@@ -42,11 +39,13 @@ scoreboard:
   #   %deaths%      -> mortes (estatística vanilla do jogador)
   #   %kdr%         -> kills / mortes (2 casas decimais)
   #   %playtime%    -> horas jogadas (estatística vanilla)
-  #   %coins%       -> saldo da economia via Vault (se use-vault: true)
   #
   # Além desses, se use-placeholderapi: true, você pode usar QUALQUER
   # placeholder de qualquer expansion instalada, ex: %vault_eco_balance%,
   # %clans_name%, %mcmmo_power_level%, etc.
+  #
+  # O ScorePlus não depende de Vault. O placeholder de economia, se usado,
+  # deve ser fornecido por PlaceholderAPI ou pela futura API econômica do servidor.
 
   lines:
     - ""
