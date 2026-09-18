@@ -6,6 +6,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 public class PlayerListener implements Listener {
 
@@ -17,9 +18,14 @@ public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onJoin(PlayerJoinEvent event) {
-        // Atribui a scoreboard logo após o login, evitando o intervalo
-        // visível que existia com o atraso anterior de 5 ticks.
+        // Atribui uma única vez depois que os demais handlers de entrada terminarem.
         scheduleUpdate(event.getPlayer(), 1L);
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        // Remove a referência da scoreboard privada ao sair.
+        plugin.getScoreboardManager().remove(event.getPlayer());
     }
 
     private void scheduleUpdate(Player player, long delay) {
