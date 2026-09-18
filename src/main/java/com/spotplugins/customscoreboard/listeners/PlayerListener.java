@@ -23,8 +23,10 @@ public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
-        scheduleAssignment(event.getPlayer(), 5L);
-        scheduleAssignment(event.getPlayer(), 40L);
+        // No login, a board ainda não existe. Portanto, aqui precisamos
+        // montar a scoreboard, e não apenas tentar restaurá-la.
+        scheduleUpdate(event.getPlayer(), 5L);
+        scheduleUpdate(event.getPlayer(), 40L);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -35,8 +37,8 @@ public class PlayerListener implements Listener {
         }
 
         // PlayerMoveEvent também ocorre apenas por rotação da câmera.
-        // A restauração é agendada para o próximo tick para executar depois de
-        // outros plugins que possam trocar a scoreboard durante o mesmo evento.
+        // A restauração é feita no próximo tick, depois de outros plugins
+        // que possam ter alterado a scoreboard durante o mesmo evento.
         scheduleRestore(player);
     }
 
@@ -54,10 +56,10 @@ public class PlayerListener implements Listener {
         });
     }
 
-    private void scheduleAssignment(Player player, long delay) {
+    private void scheduleUpdate(Player player, long delay) {
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (player.isOnline()) {
-                plugin.getScoreboardManager().ensureAssigned(player);
+                plugin.getScoreboardManager().update(player);
             }
         }, delay);
     }
