@@ -16,14 +16,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Cria uma scoreboard privada por jogador e atualiza somente o conteúdo.
- *
- * A regra principal desta classe é simples:
- * - a scoreboard é atribuída ao jogador somente quando ela é criada ou ligada;
- * - as atualizações de 1 segundo nunca chamam setScoreboard();
- * - objetivo, equipes e entradas são reutilizados para impedir flicker.
- */
 public class ScoreboardManager {
 
     private static final String OBJECTIVE_ID = "csb_main";
@@ -63,6 +55,26 @@ public class ScoreboardManager {
         return boards.get(player.getUniqueId());
     }
 
+    /**
+     * Reatribui somente quando a scoreboard foi realmente substituída.
+     * Não altera a scoreboard enquanto ela já estiver correta.
+     */
+    public void ensureAssigned(Player player) {
+        if (!isEnabledFor(player) || !player.isOnline()) {
+            return;
+        }
+
+        Scoreboard board = boards.get(player.getUniqueId());
+        if (board == null) {
+            createAndAssignBoard(player);
+            return;
+        }
+
+        if (player.getScoreboard() != board) {
+            player.setScoreboard(board);
+        }
+    }
+
     public void tick() {
         tickCounter++;
 
@@ -81,9 +93,6 @@ public class ScoreboardManager {
         }
     }
 
-    /**
-     * Atualiza uma scoreboard já atribuída. Se ainda não existir, cria-a uma vez.
-     */
     public void update(Player player) {
         if (!isEnabledFor(player) || !player.isOnline()) {
             return;
@@ -95,6 +104,7 @@ public class ScoreboardManager {
             return;
         }
 
+        // Atualiza somente o conteúdo. Não chama setScoreboard().
         updateBoardContents(player, board);
     }
 
@@ -114,8 +124,6 @@ public class ScoreboardManager {
         boards.put(id, board);
 
         buildBoard(player, board);
-
-        // IMPORTANTE: esta é a única atribuição normal da scoreboard.
         player.setScoreboard(board);
     }
 
@@ -134,9 +142,6 @@ public class ScoreboardManager {
             Team team = board.registerNewTeam("csb_line_" + i);
             team.addEntry(entry);
             team.setPrefix(renderLine(player, lines.get(i)));
-
-            // A pontuação é necessária para manter as linhas no lugar correto.
-            // A exibição visual do número é tratada separadamente por BlankFormat.
             objective.getScore(entry).setScore(lines.size() - i);
         }
     }
