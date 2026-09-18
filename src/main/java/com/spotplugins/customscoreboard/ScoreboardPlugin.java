@@ -36,6 +36,7 @@ public class ScoreboardPlugin extends JavaPlugin {
     /**
      * Verifica a cada tick se outro plugin substituiu a scoreboard.
      * Só reassocia quando a referência realmente mudou, evitando flicker.
+     * A verificação é independente das atualizações de conteúdo de 1 segundo.
      */
     private void startScoreboardWatchdog() {
         getServer().getScheduler().runTaskTimer(this, () -> {
