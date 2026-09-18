@@ -10,7 +10,6 @@ commands:
   scoreboard:
     description: Gerencia a scoreboard do plugin.
     usage: /<command> <reload|on|off>
-    permission: customscoreboard.admin
     permission-message: "&cVocê não tem permissão para usar este comando."
 
 permissions:
