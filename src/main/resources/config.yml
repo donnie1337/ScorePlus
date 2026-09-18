@@ -4,11 +4,10 @@
 # =====================================================
 
 # Atualização dinâmica periódica.
-# Desativada por padrão para evitar qualquer flicker no cliente.
-# Quando false, a scoreboard é montada no login e não envia pacotes de atualização periódicos.
-dynamic-update-enabled: false
+# A scoreboard é atualizada a cada 1 segundo sem recriá-la.
+dynamic-update-enabled: true
 
-# A cada quantos ticks a scoreboard é atualizada quando a atualização dinâmica estiver ativa.
+# 20 ticks = 1 segundo.
 update-interval-ticks: 20
 
 # A cada quantos "ciclos de atualização" o título troca de frame (animação)
