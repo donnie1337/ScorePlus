@@ -1,8 +1,8 @@
 package com.spotplugins.customscoreboard;
 
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.megavex.scoreboardlibrary.api.NoPacketAdapterAvailableException;
 import net.megavex.scoreboardlibrary.api.ScoreboardLibrary;
+import net.megavex.scoreboardlibrary.api.exception.NoPacketAdapterAvailableException;
 import net.megavex.scoreboardlibrary.api.sidebar.Sidebar;
 import org.bukkit.entity.Player;
 
