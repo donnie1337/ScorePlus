@@ -9,20 +9,18 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 public class ScoreboardPlugin extends JavaPlugin {
-
     private ScoreboardManager scoreboardManager;
     private BukkitTask updateTask;
-    private BukkitTask watchdogTask;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
 
-        this.scoreboardManager = new ScoreboardManager(this);
-        getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+        scoreboardManager = new ScoreboardManager(this);
+        scoreboardManager.initialize();
 
+        getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
         startTask();
-        startScoreboardWatchdog();
 
         getLogger().info("CustomScoreboard ativado.");
     }
@@ -32,36 +30,21 @@ public class ScoreboardPlugin extends JavaPlugin {
         if (updateTask != null) {
             updateTask.cancel();
         }
-        if (watchdogTask != null) {
-            watchdogTask.cancel();
+        if (scoreboardManager != null) {
+            scoreboardManager.close();
         }
-    }
-
-    /**
-     * Recupera a scoreboard caso outro sistema a substitua.
-     *
-     * Não roda a cada tick: a checagem ocorre a cada 10 ticks para evitar
-     * reassociações contínuas que podem causar flicker no cliente.
-     */
-    private void startScoreboardWatchdog() {
-        this.watchdogTask = getServer().getScheduler().runTaskTimer(this, () -> {
-            for (Player player : getServer().getOnlinePlayers()) {
-                if (scoreboardManager.isEnabledFor(player)) {
-                    scoreboardManager.ensureAssigned(player);
-                }
-            }
-        }, 10L, 10L);
     }
 
     private void startTask() {
         if (!getConfig().getBoolean("dynamic-update-enabled", false)) {
-            this.updateTask = null;
+            updateTask = null;
             return;
         }
 
         long interval = Math.max(1L, getConfig().getLong("update-interval-ticks", 20L));
-        this.updateTask = getServer().getScheduler().runTaskTimer(
-                this, scoreboardManager::tick, interval, interval);
+        updateTask = getServer().getScheduler().runTaskTimer(
+                this, scoreboardManager::tick, interval, interval
+        );
     }
 
     public ScoreboardManager getScoreboardManager() {
@@ -101,15 +84,18 @@ public class ScoreboardPlugin extends JavaPlugin {
                     sender.sendMessage(ChatColor.RED + "Você não tem permissão para isso.");
                     return true;
                 }
+
                 boolean wantsOn = args[0].equalsIgnoreCase("on");
                 boolean currentlyOn = scoreboardManager.isEnabledFor(player);
                 if (wantsOn != currentlyOn) {
                     scoreboardManager.toggle(player);
                 }
+
                 sender.sendMessage(ChatColor.GREEN + "Scoreboard " + (wantsOn ? "ativada." : "desativada."));
             }
             default -> sender.sendMessage(ChatColor.YELLOW + "Uso: /" + label + " <reload|on|off>");
         }
+
         return true;
     }
 }
