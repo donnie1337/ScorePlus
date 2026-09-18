@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 
 /**
  * Cria uma scoreboard privada por jogador e atualiza somente o conteúdo.
@@ -135,6 +137,7 @@ public class ScoreboardManager {
                 currentTitle()
         );
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+        hideScoreNumbers(objective);
 
         List<String> lines = getConfiguredLines();
 
@@ -157,6 +160,8 @@ public class ScoreboardManager {
             rebuildBoard(player, board);
             return;
         }
+
+        hideScoreNumbers(objective);
 
         String title = currentTitle();
         if (plugin.getConfig().getBoolean("title-animation-enabled", false)
@@ -194,6 +199,52 @@ public class ScoreboardManager {
         }
 
         removeUnusedLines(board, lines.size());
+    }
+
+    /**
+     * Remove os números de pontuação exibidos à direita das linhas.
+     *
+     * O Spigot API usado pelo projeto ainda não expõe NumberFormat, enquanto
+     * o servidor 26.2 já possui o BlankFormat do Minecraft. Usamos reflexão
+     * apenas neste ponto para manter o plugin compilável com Spigot API e
+     * esconder os números no cliente sem alterar o texto/layout das linhas.
+     */
+    private void hideScoreNumbers(Objective objective) {
+        try {
+            Method getHandle = objective.getClass().getDeclaredMethod("getHandle");
+            getHandle.setAccessible(true);
+            Object nmsObjective = getHandle.invoke(objective);
+
+            Class<?> blankFormatClass = Class.forName(
+                    "net.minecraft.network.chat.numbers.BlankFormat");
+            Constructor<?> constructor = blankFormatClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            Object blankFormat = constructor.newInstance();
+
+            Method setter = null;
+            for (Method method : nmsObjective.getClass().getMethods()) {
+                if (!method.getName().equals("setNumberFormat") || method.getParameterCount() != 1) {
+                    continue;
+                }
+                if (method.getParameterTypes()[0].isAssignableFrom(blankFormatClass)) {
+                    setter = method;
+                    break;
+                }
+            }
+
+            if (setter == null) {
+                throw new NoSuchMethodException("setNumberFormat(NumberFormat)");
+            }
+
+            setter.setAccessible(true);
+            setter.invoke(nmsObjective, blankFormat);
+        } catch (Throwable throwable) {
+            if (plugin.getConfig().getBoolean("debug", false)) {
+                plugin.getLogger().warning(
+                        "Não foi possível ocultar os números da scoreboard: "
+                                + throwable.getClass().getSimpleName() + ": " + throwable.getMessage());
+            }
+        }
     }
 
     private void rebuildBoard(Player player, Scoreboard board) {
