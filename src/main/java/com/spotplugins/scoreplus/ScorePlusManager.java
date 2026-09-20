@@ -230,58 +230,190 @@ public class ScorePlusManager {
             return title;
         }
 
-        // Animação suave: cada letra faz uma transição gradual verde -> branco -> verde.
-        // Sequência: S U R V I V A L A V I V R U S.
-        // Depois, o título inteiro faz 2 pulsos suaves em branco.
-        long interval = Math.max(1L, plugin.getConfig().getLong("title-animation-interval-seconds", 10L)) * 1000L;
-        long pulse = Math.max(200L, plugin.getConfig().getLong("title-animation-white-ms", 500L));
-        long normal = Math.max(100L, plugin.getConfig().getLong("title-animation-normal-ms", 500L));
-        int fullBlinks = 2;
+        String configuredEffect = plugin.getConfig().getString("efeito-score", "alternar");
+        if (configuredEffect == null || configuredEffect.isBlank()) {
+            configuredEffect = "alternar";
+        }
 
-        int[] sequence = {0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1, 0};
-        long letterDuration = pulse + normal;
-        long lettersDuration = sequence.length * letterDuration;
-        long fullPulseDuration = fullBlinks * letterDuration;
-        long cycle = interval + lettersDuration + fullPulseDuration;
+        String effect = configuredEffect.trim().toLowerCase(java.util.Locale.ROOT);
+        String[] effects = {
+                "onda-brilho",
+                "pulso-central",
+                "varredura",
+                "respiracao",
+                "arco-luz",
+                "duas-ondas",
+                "centro-explodindo",
+                "eco",
+                "neve"
+        };
 
-        long phase = Math.floorMod(System.currentTimeMillis() - titleAnimationStartMillis, cycle);
-        if (phase < interval) {
+        long now = System.currentTimeMillis();
+        long effectDuration = Math.max(1L,
+                plugin.getConfig().getLong("efeito-score-duracao-segundos", 8L)) * 1000L;
+
+        int effectIndex;
+        if (effect.equals("alternar")) {
+            long total = effectDuration * effects.length;
+            long phase = Math.floorMod(now - titleAnimationStartMillis, total);
+            effectIndex = (int) (phase / effectDuration);
+            effect = effects[effectIndex];
+        } else {
+            effectIndex = 0;
+            for (int i = 0; i < effects.length; i++) {
+                if (effects[i].equals(effect)) {
+                    effectIndex = i;
+                    break;
+                }
+            }
+        }
+
+        long effectStart = titleAnimationStartMillis;
+        if (configuredEffect.trim().equalsIgnoreCase("alternar")) {
+            effectStart += (long) effectIndex * effectDuration;
+        }
+
+        long localPhase = Math.floorMod(now - effectStart, effectDuration);
+        double progress = (double) localPhase / (double) effectDuration;
+
+        double[] weights = new double[8];
+
+        switch (effect) {
+            case "onda-brilho" -> {
+                double position = progress * 9.0 - 0.5;
+                for (int i = 0; i < weights.length; i++) {
+                    weights[i] = smoothStep(Math.max(0.0, 1.0 - Math.abs(i - position) / 1.6));
+                }
+            }
+            case "pulso-central" -> {
+                double position = 3.5;
+                double radius = progress * 5.0;
+                for (int i = 0; i < weights.length; i++) {
+                    double distance = Math.abs(i - position);
+                    weights[i] = smoothStep(Math.max(0.0, 1.0 - Math.abs(distance - radius) / 1.25));
+                }
+            }
+            case "varredura" -> {
+                double position = progress * 9.0 - 0.5;
+                for (int i = 0; i < weights.length; i++) {
+                    double distance = Math.abs(i - position);
+                    weights[i] = Math.exp(-(distance * distance) / 0.75);
+                }
+            }
+            case "respiracao" -> {
+                double pulse = (Math.sin(progress * Math.PI * 2.0) + 1.0) / 2.0;
+                for (int i = 0; i < weights.length; i++) {
+                    weights[i] = pulse;
+                }
+            }
+            case "arco-luz" -> {
+                double position = progress * 10.0 - 1.0;
+                for (int i = 0; i < weights.length; i++) {
+                    double distance = Math.abs(i - position);
+                    double head = Math.exp(-(distance * distance) / 0.5);
+                    double tail = i < position ? Math.exp(-(position - i) / 1.8) * 0.45 : 0.0;
+                    weights[i] = Math.max(head, tail);
+                }
+            }
+            case "duas-ondas" -> {
+                double left = progress * 8.0;
+                double right = 7.0 - progress * 8.0;
+                for (int i = 0; i < weights.length; i++) {
+                    double leftWave = smoothStep(Math.max(0.0, 1.0 - Math.abs(i - left) / 1.35));
+                    double rightWave = smoothStep(Math.max(0.0, 1.0 - Math.abs(i - right) / 1.35));
+                    weights[i] = Math.max(leftWave, rightWave);
+                }
+            }
+            case "centro-explodindo" -> {
+                double radius = progress * 6.0;
+                for (int i = 0; i < weights.length; i++) {
+                    double distance = Math.abs(i - 3.5);
+                    weights[i] = smoothStep(Math.max(0.0, 1.0 - Math.abs(distance - radius) / 1.15));
+                }
+            }
+            case "eco" -> {
+                double position = progress * 10.0 - 1.0;
+                for (int i = 0; i < weights.length; i++) {
+                    if (i <= position) {
+                        weights[i] = Math.exp(-(position - i) / 1.7);
+                    }
+                }
+            }
+            case "neve" -> {
+                for (int i = 0; i < weights.length; i++) {
+                    double sparkle = (Math.sin(progress * Math.PI * 4.0 + i * 1.7) + 1.0) / 2.0;
+                    weights[i] = Math.pow(sparkle, 5.0) * 0.9;
+                }
+            }
+            default -> {
+                return title;
+            }
+        }
+
+        return colorSurvivalEffect(title, weights);
+    }
+
+    private String colorSurvivalEffect(String title, double[] weights) {
+        String visibleTitle = stripLegacyFormatting(title);
+        String target = "SURVIVAL";
+        int start = visibleTitle.toUpperCase(java.util.Locale.ROOT).indexOf(target);
+        if (start < 0) {
             return title;
         }
 
-        long animationPhase = phase - interval;
-        if (animationPhase < lettersDuration) {
-            int sequenceIndex = (int) (animationPhase / letterDuration);
-            int characterIndex = sequence[sequenceIndex];
-            long offset = animationPhase % letterDuration;
+        StringBuilder rendered = new StringBuilder(title.length() + 64);
+        int visibleIndex = 0;
+        boolean bold = false;
 
-            // Smoothstep para evitar qualquer troca brusca de cor.
-            double progress;
-            if (offset < pulse) {
-                progress = smoothStep((double) offset / pulse);
-            } else {
-                progress = 1.0 - smoothStep((double) (offset - pulse) / normal);
+        for (int i = 0; i < title.length(); i++) {
+            char c = title.charAt(i);
+
+            if (c == '&' && i + 1 < title.length()) {
+                char code = title.charAt(i + 1);
+                if ("klmnorKLMNOR".indexOf(code) >= 0) {
+                    if (code == 'l' || code == 'L') {
+                        bold = true;
+                    } else if (code == 'r' || code == 'R') {
+                        bold = false;
+                    }
+                }
+                rendered.append('&').append(code);
+                i++;
+                continue;
             }
 
-            return colorSingleTitleCharacterSmooth(title, characterIndex, progress);
-        }
-
-        long fullPhase = animationPhase - lettersDuration;
-        long fullSlot = letterDuration;
-        long fullIndex = fullPhase / fullSlot;
-        long fullOffset = fullPhase % fullSlot;
-
-        if (fullIndex < fullBlinks) {
-            double progress;
-            if (fullOffset < pulse) {
-                progress = smoothStep((double) fullOffset / pulse);
-            } else {
-                progress = 1.0 - smoothStep((double) (fullOffset - pulse) / normal);
+            boolean survival = visibleIndex >= start && visibleIndex < start + target.length();
+            if (survival) {
+                int letter = visibleIndex - start;
+                double weight = Math.max(0.0, Math.min(1.0, weights[letter]));
+                rendered.append(toHexColor(interpolateColor(
+                        85, 255, 85,
+                        255, 255, 255,
+                        weight
+                )));
+                if (bold) {
+                    rendered.append("&l");
+                }
             }
-            return colorWholeTitleSmooth(title, progress);
+
+            rendered.append(c);
+            visibleIndex++;
         }
 
-        return title;
+        return rendered.toString();
+    }
+
+    private String stripLegacyFormatting(String text) {
+        StringBuilder visible = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '&' && i + 1 < text.length()) {
+                i++;
+                continue;
+            }
+            visible.append(c);
+        }
+        return visible.toString();
     }
 
     private double smoothStep(double value) {
