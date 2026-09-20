@@ -53,10 +53,15 @@ public class ScorePlus extends JavaPlugin {
     }
 
     private void startTitleAnimationTask() {
-        if (!getConfig().getBoolean("title-animation-enabled", false)) {
+        if (titleAnimationTask != null) {
+            titleAnimationTask.cancel();
             titleAnimationTask = null;
+        }
+
+        if (!getConfig().getBoolean("title-animation-enabled", false)) {
             return;
         }
+
         titleAnimationTask = getServer().getScheduler().runTaskTimer(
                 this, scoreboardManager::tickTitleAnimation, 1L, 1L
         );
@@ -86,8 +91,10 @@ public class ScorePlus extends JavaPlugin {
                 reloadConfig();
                 if (updateTask != null) {
                     updateTask.cancel();
+                    updateTask = null;
                 }
                 startTask();
+                scoreboardManager.reload();
                 startTitleAnimationTask();
                 sender.sendMessage(ChatColor.GREEN + "Configuração da scoreboard recarregada.");
             }
