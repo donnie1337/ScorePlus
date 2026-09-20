@@ -216,20 +216,19 @@ public class ScorePlusManager {
             return title;
         }
 
-        // Ciclo: S -> U -> R -> V -> I -> V -> A -> L,
-        // depois volta A -> V -> I -> V -> R -> U -> S,
-        // e então o título inteiro pisca 2 vezes em branco.
+        // Animação suave: cada letra faz uma transição gradual verde -> branco -> verde.
+        // Sequência: S U R V I V A L A V I V R U S.
+        // Depois, o título inteiro faz 2 pulsos suaves em branco.
         long interval = Math.max(1L, plugin.getConfig().getLong("title-animation-interval-seconds", 10L)) * 1000L;
-        long white = Math.max(50L, plugin.getConfig().getLong("title-animation-white-ms", 250L));
-        long normal = Math.max(50L, plugin.getConfig().getLong("title-animation-normal-ms", 150L));
+        long pulse = Math.max(200L, plugin.getConfig().getLong("title-animation-white-ms", 500L));
+        long normal = Math.max(100L, plugin.getConfig().getLong("title-animation-normal-ms", 500L));
         int fullBlinks = 2;
 
         int[] sequence = {0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1, 0};
-        long letterSlot = white + normal;
-        long letterAnimationDuration = sequence.length * letterSlot;
-        long fullBlinkDuration = fullBlinks * letterSlot;
-        long animationDuration = letterAnimationDuration + fullBlinkDuration;
-        long cycle = interval + animationDuration;
+        long letterDuration = pulse + normal;
+        long lettersDuration = sequence.length * letterDuration;
+        long fullPulseDuration = fullBlinks * letterDuration;
+        long cycle = interval + lettersDuration + fullPulseDuration;
 
         long phase = Math.floorMod(System.currentTimeMillis() - titleAnimationStartMillis, cycle);
         if (phase < interval) {
@@ -237,25 +236,46 @@ public class ScorePlusManager {
         }
 
         long animationPhase = phase - interval;
-        if (animationPhase < letterAnimationDuration) {
-            int sequenceIndex = (int) (animationPhase / letterSlot);
+        if (animationPhase < lettersDuration) {
+            int sequenceIndex = (int) (animationPhase / letterDuration);
             int characterIndex = sequence[sequenceIndex];
-            long characterOffset = animationPhase % letterSlot;
-            boolean whiteCharacter = characterOffset < white;
-            return colorSingleTitleCharacter(title, characterIndex, whiteCharacter);
+            long offset = animationPhase % letterDuration;
+
+            // Smoothstep para evitar qualquer troca brusca de cor.
+            double progress;
+            if (offset < pulse) {
+                progress = smoothStep((double) offset / pulse);
+            } else {
+                progress = 1.0 - smoothStep((double) (offset - pulse) / normal);
+            }
+
+            return colorSingleTitleCharacterSmooth(title, characterIndex, progress);
         }
 
-        long blinkPhase = animationPhase - letterAnimationDuration;
-        long blinkIndex = blinkPhase / letterSlot;
-        long blinkOffset = blinkPhase % letterSlot;
-        if (blinkIndex < fullBlinks && blinkOffset < white) {
-            return makeTitleWhite(title);
+        long fullPhase = animationPhase - lettersDuration;
+        long fullSlot = letterDuration;
+        long fullIndex = fullPhase / fullSlot;
+        long fullOffset = fullPhase % fullSlot;
+
+        if (fullIndex < fullBlinks) {
+            double progress;
+            if (fullOffset < pulse) {
+                progress = smoothStep((double) fullOffset / pulse);
+            } else {
+                progress = 1.0 - smoothStep((double) (fullOffset - pulse) / normal);
+            }
+            return colorWholeTitleSmooth(title, progress);
         }
 
         return title;
     }
 
-    private String colorSingleTitleCharacter(String title, int characterIndex, boolean whiteCharacter) {
+    private double smoothStep(double value) {
+        value = Math.max(0.0, Math.min(1.0, value));
+        return value * value * (3.0 - 2.0 * value);
+    }
+
+    private String colorSingleTitleCharacterSmooth(String title, int characterIndex, double progress) {
         StringBuilder visible = new StringBuilder();
         for (int i = 0; i < title.length(); i++) {
             char c = title.charAt(i);
@@ -273,7 +293,7 @@ public class ScorePlusManager {
         }
 
         int targetVisibleIndex = wordStart + characterIndex;
-        StringBuilder rendered = new StringBuilder(title.length() + 16);
+        StringBuilder rendered = new StringBuilder(title.length() + 32);
         int visibleIndex = 0;
         boolean bold = false;
 
@@ -294,7 +314,8 @@ public class ScorePlusManager {
                 continue;
             }
 
-            rendered.append(visibleIndex == targetVisibleIndex && whiteCharacter ? "&f" : "&a");
+            double letterProgress = visibleIndex == targetVisibleIndex ? progress : 0.0;
+            rendered.append(toHexColor(interpolateColor(85, 255, 85, 255, 255, 255, letterProgress)));
             if (bold) {
                 rendered.append("&l");
             }
@@ -305,21 +326,50 @@ public class ScorePlusManager {
         return rendered.toString();
     }
 
-    private String makeTitleWhite(String title) {
-        StringBuilder white = new StringBuilder("&f");
+    private String colorWholeTitleSmooth(String title, double progress) {
+        StringBuilder rendered = new StringBuilder(title.length() + 32);
+        boolean bold = false;
+
         for (int i = 0; i < title.length(); i++) {
             char c = title.charAt(i);
+
             if (c == '&' && i + 1 < title.length()) {
                 char code = title.charAt(i + 1);
                 if ("klmnorKLMNOR".indexOf(code) >= 0) {
-                    white.append('&').append(code);
+                    if (code == 'l' || code == 'L') {
+                        bold = true;
+                    } else if (code == 'r' || code == 'R') {
+                        bold = false;
+                    }
+                    rendered.append('&').append(code);
                 }
                 i++;
                 continue;
             }
-            white.append(c);
+
+            rendered.append(toHexColor(interpolateColor(85, 255, 85, 255, 255, 255, progress)));
+            if (bold) {
+                rendered.append("&l");
+            }
+            rendered.append(c);
         }
-        return white.toString();
+
+        return rendered.toString();
+    }
+
+    private int[] interpolateColor(int r1, int g1, int b1, int r2, int g2, int b2, double progress) {
+        return new int[] {
+                (int) Math.round(r1 + (r2 - r1) * progress),
+                (int) Math.round(g1 + (g2 - g1) * progress),
+                (int) Math.round(b1 + (b2 - b1) * progress)
+        };
+    }
+
+    private String toHexColor(int[] rgb) {
+        return String.format("&x&%x&%x&%x&%x&%x&%x",
+                (rgb[0] >> 4) & 0xF, rgb[0] & 0xF,
+                (rgb[1] >> 4) & 0xF, rgb[1] & 0xF,
+                (rgb[2] >> 4) & 0xF, rgb[2] & 0xF);
     }
 
     private String truncate(String text, int max) {
