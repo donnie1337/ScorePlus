@@ -216,32 +216,88 @@ public class ScorePlusManager {
             return title;
         }
 
-        // Mesmo ciclo visual do DEV do CargoPlus: aguarda o intervalo e então
-        // executa 3 piscadas completas em branco antes de voltar ao título normal.
+        // Ciclo: S -> U -> R -> V -> I -> V -> A -> L,
+        // depois volta A -> V -> I -> V -> R -> U -> S,
+        // e então o título inteiro pisca 2 vezes em branco.
         long interval = Math.max(1L, plugin.getConfig().getLong("title-animation-interval-seconds", 10L)) * 1000L;
         long white = Math.max(50L, plugin.getConfig().getLong("title-animation-white-ms", 250L));
         long normal = Math.max(50L, plugin.getConfig().getLong("title-animation-normal-ms", 250L));
-        int blinks = Math.max(1, Math.min(10, plugin.getConfig().getInt("title-animation-blinks", 3)));
-        long animationDuration = blinks * (white + normal);
-        long cycle = interval + animationDuration;
-        long phase = Math.floorMod(System.currentTimeMillis() - titleAnimationStartMillis, cycle);
+        int fullBlinks = 2;
 
+        int[] sequence = {0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1, 0};
+        long letterSlot = white + normal;
+        long letterAnimationDuration = sequence.length * letterSlot;
+        long fullBlinkDuration = fullBlinks * letterSlot;
+        long animationDuration = letterAnimationDuration + fullBlinkDuration;
+        long cycle = interval + animationDuration;
+
+        long phase = Math.floorMod(System.currentTimeMillis() - titleAnimationStartMillis, cycle);
         if (phase < interval) {
             return title;
         }
 
-        long blinkPhase = phase - interval;
-        long blinkSlot = white + normal;
-        if ((blinkPhase / blinkSlot) < blinks && (blinkPhase % blinkSlot) < white) {
+        long animationPhase = phase - interval;
+        if (animationPhase < letterAnimationDuration) {
+            int sequenceIndex = (int) (animationPhase / letterSlot);
+            int characterIndex = sequence[sequenceIndex];
+            long characterOffset = animationPhase % letterSlot;
+            boolean whiteCharacter = characterOffset < white;
+            return colorSingleTitleCharacter(title, characterIndex, whiteCharacter);
+        }
+
+        long blinkPhase = animationPhase - letterAnimationDuration;
+        long blinkIndex = blinkPhase / letterSlot;
+        long blinkOffset = blinkPhase % letterSlot;
+        if (blinkIndex < fullBlinks && blinkOffset < white) {
             return makeTitleWhite(title);
         }
 
         return title;
     }
 
+    private String colorSingleTitleCharacter(String title, int characterIndex, boolean whiteCharacter) {
+        StringBuilder rendered = new StringBuilder(title.length() + 8);
+        int visibleIndex = 0;
+        boolean bold = false;
+
+        for (int i = 0; i < title.length(); i++) {
+            char c = title.charAt(i);
+
+            if (c == '&' && i + 1 < title.length()) {
+                char code = title.charAt(i + 1);
+                if ("klmnorKLMNOR".indexOf(code) >= 0) {
+                    if (code == 'l' || code == 'L') {
+                        bold = true;
+                    } else if (code == 'r' || code == 'R') {
+                        bold = false;
+                    }
+                    rendered.append('&').append(code);
+                }
+                i++;
+                continue;
+            }
+
+            if (visibleIndex == characterIndex) {
+                rendered.append(whiteCharacter ? "&f" : "&a");
+                if (bold) {
+                    rendered.append("&l");
+                }
+            } else {
+                rendered.append("&a");
+                if (bold) {
+                    rendered.append("&l");
+                }
+            }
+
+            rendered.append(c);
+            visibleIndex++;
+        }
+
+        return rendered.toString();
+    }
+
     private String makeTitleWhite(String title) {
         StringBuilder white = new StringBuilder("&f");
-        boolean formatting = false;
         for (int i = 0; i < title.length(); i++) {
             char c = title.charAt(i);
             if (c == '&' && i + 1 < title.length()) {
