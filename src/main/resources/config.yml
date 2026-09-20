@@ -13,6 +13,7 @@ use-placeholderapi: true
 #  EFEITOS DO TÍTULO
 # =====================================================
 # Escolha aqui o efeito utilizado no SURVIVAL.
+# Use "alternar" para passar automaticamente pelos 9 efeitos.
 #
 # Eventos disponíveis:
 # - onda-brilho      -> brilho percorre as letras
@@ -25,7 +26,9 @@ use-placeholderapi: true
 # - eco              -> brilho percorre deixando um eco suave
 # - neve             -> reflexo branco suave, combinando com o ❄
 #
-efeito-score: "neve"
+efeito-score: "alternar"
+# Tempo que cada efeito permanece ativo antes de passar para o próximo.
+efeito-score-duracao-segundos: 8
 
 scoreboard:
   title-frames:
