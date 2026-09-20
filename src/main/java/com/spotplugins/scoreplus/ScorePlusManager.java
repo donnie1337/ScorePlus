@@ -290,25 +290,18 @@ public class ScorePlusManager {
     }
 
     private String colorSingleTitleCharacterSmooth(String title, int characterIndex, double progress) {
-        StringBuilder visible = new StringBuilder();
-        for (int i = 0; i < title.length(); i++) {
-            char c = title.charAt(i);
-            if (c == '&' && i + 1 < title.length()) {
-                i++;
-                continue;
-            }
-            visible.append(c);
-        }
-
-        String word = "SURVIVAL";
-        int wordStart = visible.toString().toUpperCase(java.util.Locale.ROOT).indexOf(word);
+        String targetWord = "SURVIVAL";
+        String upperTitle = title.toUpperCase(java.util.Locale.ROOT);
+        int wordStart = upperTitle.indexOf(targetWord);
         if (wordStart < 0) {
             return title;
         }
 
-        int targetVisibleIndex = wordStart + characterIndex;
+        // O efeito é aplicado somente às letras de SURVIVAL.
+        // Tudo que vem antes (inclusive o ❄) mantém exatamente a cor configurada.
         StringBuilder rendered = new StringBuilder(title.length() + 32);
-        int visibleIndex = 0;
+        int survivalIndex = -1;
+        boolean insideSurvival = false;
         boolean bold = false;
 
         for (int i = 0; i < title.length(); i++) {
@@ -323,24 +316,52 @@ public class ScorePlusManager {
                         bold = false;
                     }
                     rendered.append('&').append(code);
+                } else {
+                    rendered.append('&').append(code);
                 }
                 i++;
                 continue;
             }
 
-            double letterProgress = visibleIndex == targetVisibleIndex ? progress : 0.0;
-            rendered.append(toHexColor(interpolateColor(85, 255, 85, 255, 255, 255, letterProgress)));
-            if (bold) {
-                rendered.append("&l");
+            boolean isSurvivalCharacter = i >= wordStart && i < wordStart + targetWord.length();
+            if (isSurvivalCharacter) {
+                survivalIndex++;
+                double letterProgress = survivalIndex == characterIndex ? progress : 0.0;
+                rendered.append(toHexColor(interpolateColor(
+                        85, 255, 85,
+                        255, 255, 255,
+                        letterProgress
+                )));
+                if (bold) {
+                    rendered.append("&l");
+                }
             }
+
             rendered.append(c);
-            visibleIndex++;
+
+            if (isSurvivalCharacter && bold) {
+                // O &l acima já foi aplicado antes da letra.
+            }
+
+            if (isSurvivalCharacter && survivalIndex == targetWord.length() - 1) {
+                insideSurvival = false;
+            } else if (isSurvivalCharacter) {
+                insideSurvival = true;
+            }
         }
 
         return rendered.toString();
     }
 
     private String colorWholeTitleSmooth(String title, double progress) {
+        String targetWord = "SURVIVAL";
+        String upperTitle = title.toUpperCase(java.util.Locale.ROOT);
+        int wordStart = upperTitle.indexOf(targetWord);
+        if (wordStart < 0) {
+            return title;
+        }
+
+        // Somente SURVIVAL recebe o efeito. O ❄ e os espaços permanecem intactos.
         StringBuilder rendered = new StringBuilder(title.length() + 32);
         boolean bold = false;
 
@@ -356,15 +377,25 @@ public class ScorePlusManager {
                         bold = false;
                     }
                     rendered.append('&').append(code);
+                } else {
+                    rendered.append('&').append(code);
                 }
                 i++;
                 continue;
             }
 
-            rendered.append(toHexColor(interpolateColor(85, 255, 85, 255, 255, 255, progress)));
-            if (bold) {
-                rendered.append("&l");
+            boolean isSurvivalCharacter = i >= wordStart && i < wordStart + targetWord.length();
+            if (isSurvivalCharacter) {
+                rendered.append(toHexColor(interpolateColor(
+                        85, 255, 85,
+                        255, 255, 255,
+                        progress
+                )));
+                if (bold) {
+                    rendered.append("&l");
+                }
             }
+
             rendered.append(c);
         }
 
