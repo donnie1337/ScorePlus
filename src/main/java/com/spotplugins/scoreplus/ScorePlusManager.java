@@ -26,6 +26,7 @@ public class ScorePlusManager {
     private ScoreboardLibrary scoreboardLibrary;
     private int titleFrame;
     private int tickCounter;
+    private long titleAnimationStartMillis;
 
     public ScorePlusManager(ScorePlus plugin) {
         this.plugin = plugin;
@@ -56,6 +57,9 @@ public class ScorePlusManager {
 
     public void tick() {
         tickCounter++;
+        if (titleAnimationStartMillis == 0L) {
+            titleAnimationStartMillis = System.currentTimeMillis();
+        }
 
         if (plugin.getConfig().getBoolean("title-animation-enabled", false)) {
             int speed = Math.max(1, plugin.getConfig().getInt("title-animation-speed", 4));
@@ -186,10 +190,52 @@ public class ScorePlusManager {
 
     private String currentTitle() {
         List<String> frames = plugin.getConfig().getStringList("scoreboard.title-frames");
-        if (frames.isEmpty()) {
-            return "&a&lSURVIVAL";
+        String title = frames.isEmpty() ? "&a&lSURVIVAL" : frames.get(titleFrame % frames.size());
+        title = truncate(title, 128);
+
+        if (!plugin.getConfig().getBoolean("title-animation-enabled", false)) {
+            return title;
         }
-        return truncate(frames.get(titleFrame % frames.size()), 128);
+
+        // Mesmo ciclo visual do DEV do CargoPlus: aguarda o intervalo e então
+        // executa 3 piscadas completas em branco antes de voltar ao título normal.
+        long interval = Math.max(1L, plugin.getConfig().getLong("title-animation-interval-seconds", 10L)) * 1000L;
+        long white = Math.max(50L, plugin.getConfig().getLong("title-animation-white-ms", 250L));
+        long normal = Math.max(50L, plugin.getConfig().getLong("title-animation-normal-ms", 250L));
+        int blinks = Math.max(1, Math.min(10, plugin.getConfig().getInt("title-animation-blinks", 3)));
+        long animationDuration = blinks * (white + normal);
+        long cycle = interval + animationDuration;
+        long phase = Math.floorMod(System.currentTimeMillis() - titleAnimationStartMillis, cycle);
+
+        if (phase < interval) {
+            return title;
+        }
+
+        long blinkPhase = phase - interval;
+        long blinkSlot = white + normal;
+        if ((blinkPhase / blinkSlot) < blinks && (blinkPhase % blinkSlot) < white) {
+            return makeTitleWhite(title);
+        }
+
+        return title;
+    }
+
+    private String makeTitleWhite(String title) {
+        StringBuilder white = new StringBuilder("&f");
+        boolean formatting = false;
+        for (int i = 0; i < title.length(); i++) {
+            char c = title.charAt(i);
+            if (c == '&' && i + 1 < title.length()) {
+                char code = title.charAt(i + 1);
+                if ("klmnorKLMNOR".indexOf(code) >= 0) {
+                    white.append('&').append(code);
+                }
+                i++;
+                continue;
+            }
+            white.append(c);
+        }
+        return white.toString();
     }
 
     private String truncate(String text, int max) {
