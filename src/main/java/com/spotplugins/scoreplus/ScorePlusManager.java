@@ -250,7 +250,7 @@ public class ScorePlusManager {
 
         long now = System.currentTimeMillis();
         long effectDuration = Math.max(1L,
-                plugin.getConfig().getLong("efeito-score-duracao-segundos", 8L)) * 1000L;
+                plugin.getConfig().getLong("efeito-score-duracao-segundos", 4L)) * 1000L;
 
         int effectIndex;
         if (effect.equals("alternar")) {
@@ -282,7 +282,7 @@ public class ScorePlusManager {
             case "onda-brilho" -> {
                 double position = progress * 9.0 - 0.5;
                 for (int i = 0; i < weights.length; i++) {
-                    weights[i] = smoothStep(Math.max(0.0, 1.0 - Math.abs(i - position) / 1.6));
+                    weights[i] = smoothStep(Math.max(0.0, 1.0 - Math.abs(i - position) / 1.9));
                 }
             }
             case "pulso-central" -> {
@@ -297,7 +297,7 @@ public class ScorePlusManager {
                 double position = progress * 9.0 - 0.5;
                 for (int i = 0; i < weights.length; i++) {
                     double distance = Math.abs(i - position);
-                    weights[i] = Math.exp(-(distance * distance) / 0.75);
+                    weights[i] = Math.exp(-(distance * distance) / 1.05);
                 }
             }
             case "respiracao" -> {
@@ -310,8 +310,8 @@ public class ScorePlusManager {
                 double position = progress * 10.0 - 1.0;
                 for (int i = 0; i < weights.length; i++) {
                     double distance = Math.abs(i - position);
-                    double head = Math.exp(-(distance * distance) / 0.5);
-                    double tail = i < position ? Math.exp(-(position - i) / 1.8) * 0.45 : 0.0;
+                    double head = Math.exp(-(distance * distance) / 0.8);
+                    double tail = i < position ? Math.exp(-(position - i) / 2.2) * 0.35 : 0.0;
                     weights[i] = Math.max(head, tail);
                 }
             }
@@ -319,8 +319,8 @@ public class ScorePlusManager {
                 double left = progress * 8.0;
                 double right = 7.0 - progress * 8.0;
                 for (int i = 0; i < weights.length; i++) {
-                    double leftWave = smoothStep(Math.max(0.0, 1.0 - Math.abs(i - left) / 1.35));
-                    double rightWave = smoothStep(Math.max(0.0, 1.0 - Math.abs(i - right) / 1.35));
+                    double leftWave = smoothStep(Math.max(0.0, 1.0 - Math.abs(i - left) / 1.6));
+                    double rightWave = smoothStep(Math.max(0.0, 1.0 - Math.abs(i - right) / 1.6));
                     weights[i] = Math.max(leftWave, rightWave);
                 }
             }
@@ -328,21 +328,21 @@ public class ScorePlusManager {
                 double radius = progress * 6.0;
                 for (int i = 0; i < weights.length; i++) {
                     double distance = Math.abs(i - 3.5);
-                    weights[i] = smoothStep(Math.max(0.0, 1.0 - Math.abs(distance - radius) / 1.15));
+                    weights[i] = smoothStep(Math.max(0.0, 1.0 - Math.abs(distance - radius) / 1.45));
                 }
             }
             case "eco" -> {
                 double position = progress * 10.0 - 1.0;
                 for (int i = 0; i < weights.length; i++) {
                     if (i <= position) {
-                        weights[i] = Math.exp(-(position - i) / 1.7);
+                        weights[i] = Math.exp(-(position - i) / 2.1);
                     }
                 }
             }
             case "neve" -> {
                 for (int i = 0; i < weights.length; i++) {
                     double sparkle = (Math.sin(progress * Math.PI * 4.0 + i * 1.7) + 1.0) / 2.0;
-                    weights[i] = Math.pow(sparkle, 5.0) * 0.9;
+                    weights[i] = Math.pow(sparkle, 3.5) * 0.65;
                 }
             }
             default -> {
