@@ -6,7 +6,7 @@
 dynamic-update-enabled: true
 update-interval-ticks: 20
 title-animation-speed: 4
-title-animation-enabled: false
+title-animation-enabled: true
 use-placeholderapi: true
 
 scoreboard:
@@ -28,3 +28,9 @@ scoreboard:
     - " └&e🧭 &f/rtp"
     - ""
     - "    &6REDEGLOW.COM"
+
+# Piscada do título no mesmo ciclo visual do DEV do CargoPlus
+title-animation-interval-seconds: 10
+title-animation-white-ms: 250
+title-animation-normal-ms: 250
+title-animation-blinks: 3
