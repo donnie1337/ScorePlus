@@ -28,7 +28,7 @@ use-placeholderapi: true
 #
 efeito-score: "alternar"
 # Tempo que cada efeito permanece ativo antes de passar para o próximo.
-efeito-score-duracao-segundos: 8
+efeito-score-duracao-segundos: 4
 
 scoreboard:
   title-frames:
