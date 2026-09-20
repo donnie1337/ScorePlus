@@ -221,7 +221,7 @@ public class ScorePlusManager {
         // e então o título inteiro pisca 2 vezes em branco.
         long interval = Math.max(1L, plugin.getConfig().getLong("title-animation-interval-seconds", 10L)) * 1000L;
         long white = Math.max(50L, plugin.getConfig().getLong("title-animation-white-ms", 250L));
-        long normal = Math.max(50L, plugin.getConfig().getLong("title-animation-normal-ms", 250L));
+        long normal = Math.max(50L, plugin.getConfig().getLong("title-animation-normal-ms", 150L));
         int fullBlinks = 2;
 
         int[] sequence = {0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1, 0};
@@ -256,7 +256,24 @@ public class ScorePlusManager {
     }
 
     private String colorSingleTitleCharacter(String title, int characterIndex, boolean whiteCharacter) {
-        StringBuilder rendered = new StringBuilder(title.length() + 8);
+        StringBuilder visible = new StringBuilder();
+        for (int i = 0; i < title.length(); i++) {
+            char c = title.charAt(i);
+            if (c == '&' && i + 1 < title.length()) {
+                i++;
+                continue;
+            }
+            visible.append(c);
+        }
+
+        String word = "SURVIVAL";
+        int wordStart = visible.toString().toUpperCase(java.util.Locale.ROOT).indexOf(word);
+        if (wordStart < 0) {
+            return title;
+        }
+
+        int targetVisibleIndex = wordStart + characterIndex;
+        StringBuilder rendered = new StringBuilder(title.length() + 16);
         int visibleIndex = 0;
         boolean bold = false;
 
@@ -277,18 +294,10 @@ public class ScorePlusManager {
                 continue;
             }
 
-            if (visibleIndex == characterIndex) {
-                rendered.append(whiteCharacter ? "&f" : "&a");
-                if (bold) {
-                    rendered.append("&l");
-                }
-            } else {
-                rendered.append("&a");
-                if (bold) {
-                    rendered.append("&l");
-                }
+            rendered.append(visibleIndex == targetVisibleIndex && whiteCharacter ? "&f" : "&a");
+            if (bold) {
+                rendered.append("&l");
             }
-
             rendered.append(c);
             visibleIndex++;
         }
