@@ -55,6 +55,25 @@ public class ScorePlusManager {
         }
     }
 
+    public void tickTitleAnimation() {
+        if (!plugin.getConfig().getBoolean("title-animation-enabled", false)) return;
+        if (titleAnimationStartMillis == 0L) titleAnimationStartMillis = System.currentTimeMillis();
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            if (isEnabledFor(player)) updateTitle(player);
+        }
+    }
+
+    private void updateTitle(Player player) {
+        Sidebar sidebar = sidebars.get(player.getUniqueId());
+        if (sidebar == null || sidebar.closed()) return;
+        String title = currentTitle();
+        String previousTitle = renderedTitles.get(player.getUniqueId());
+        if (!title.equals(previousTitle)) {
+            sidebar.title(legacy.deserialize(title));
+            renderedTitles.put(player.getUniqueId(), title);
+        }
+    }
+
     public void tick() {
         tickCounter++;
         if (titleAnimationStartMillis == 0L) {
