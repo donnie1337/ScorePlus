@@ -11,6 +11,7 @@ import org.bukkit.scheduler.BukkitTask;
 public class ScorePlus extends JavaPlugin {
     private ScorePlusManager scoreboardManager;
     private BukkitTask updateTask;
+    private BukkitTask titleAnimationTask;
 
     @Override
     public void onEnable() {
@@ -21,6 +22,7 @@ public class ScorePlus extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
         startTask();
+        startTitleAnimationTask();
 
         getLogger().info("ScorePlus ativado.");
     }
@@ -29,6 +31,9 @@ public class ScorePlus extends JavaPlugin {
     public void onDisable() {
         if (updateTask != null) {
             updateTask.cancel();
+        }
+        if (titleAnimationTask != null) {
+            titleAnimationTask.cancel();
         }
         if (scoreboardManager != null) {
             scoreboardManager.close();
@@ -44,6 +49,16 @@ public class ScorePlus extends JavaPlugin {
         long interval = Math.max(1L, getConfig().getLong("update-interval-ticks", 20L));
         updateTask = getServer().getScheduler().runTaskTimer(
                 this, scoreboardManager::tick, interval, interval
+        );
+    }
+
+    private void startTitleAnimationTask() {
+        if (!getConfig().getBoolean("title-animation-enabled", false)) {
+            titleAnimationTask = null;
+            return;
+        }
+        titleAnimationTask = getServer().getScheduler().runTaskTimer(
+                this, scoreboardManager::tickTitleAnimation, 1L, 1L
         );
     }
 
@@ -73,6 +88,7 @@ public class ScorePlus extends JavaPlugin {
                     updateTask.cancel();
                 }
                 startTask();
+                startTitleAnimationTask();
                 sender.sendMessage(ChatColor.GREEN + "Configuração da scoreboard recarregada.");
             }
             case "on", "off" -> {
