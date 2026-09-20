@@ -9,6 +9,24 @@ title-animation-speed: 4
 title-animation-enabled: true
 use-placeholderapi: true
 
+# =====================================================
+#  EFEITOS DO TÍTULO
+# =====================================================
+# Escolha aqui o efeito utilizado no SURVIVAL.
+#
+# Eventos disponíveis:
+# - onda-brilho      -> brilho percorre as letras
+# - pulso-central    -> brilho começa no centro e se espalha
+# - varredura        -> reflexo branco percorre o título
+# - respiracao       -> título inteiro pulsa suavemente
+# - arco-luz         -> brilho percorre deixando uma pequena cauda
+# - duas-ondas       -> duas ondas partem das extremidades
+# - centro-explodindo -> brilho cresce do centro para as pontas
+# - eco              -> brilho percorre deixando um eco suave
+# - neve             -> reflexo branco suave, combinando com o ❄
+#
+efeito-score: "neve"
+
 scoreboard:
   title-frames:
     - "  &b❄ &a&lSURVIVAL"
@@ -29,7 +47,8 @@ scoreboard:
     - ""
     - "    &6REDEGLOW.COM"
 
-# Piscada do título no mesmo ciclo visual do DEV do CargoPlus
+# Configuração base da animação do título.
+# O efeito selecionado em "efeito-score" controla o comportamento visual.
 title-animation-interval-seconds: 10
 title-animation-white-ms: 250
 title-animation-normal-ms: 250
