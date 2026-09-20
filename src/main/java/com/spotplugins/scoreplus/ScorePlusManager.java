@@ -55,6 +55,20 @@ public class ScorePlusManager {
         }
     }
 
+    public void reload() {
+        titleFrame = 0;
+        tickCounter = 0;
+        titleAnimationStartMillis = System.currentTimeMillis();
+        renderedTitles.clear();
+        renderedLines.clear();
+
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            if (isEnabledFor(player)) {
+                update(player);
+            }
+        }
+    }
+
     public void tickTitleAnimation() {
         if (!plugin.getConfig().getBoolean("title-animation-enabled", false)) return;
         if (titleAnimationStartMillis == 0L) titleAnimationStartMillis = System.currentTimeMillis();
