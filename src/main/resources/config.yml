@@ -32,23 +32,22 @@ efeito-score-duracao-segundos: 2
 
 scoreboard:
   title-frames:
-    - "  &b❄ &a&lSURVIVAL"
+    - " &a&lSURVIVAL"
 
   lines:
+    - "    &7(&f%date%&7) "
     - ""
     - "┌&7%player%"
-    - "    &7(&f%date%&7) "
-    - " "
-    - "  &e$ &fMoedas&7: &aMOEDAS"
-    - "  &b⚡ &fPoder&7: &bMCMMO"
-    - "  &c⚔ &fKills&7: &c%kills%"
-    - "  &4☠ &fMortes&7: &4%deaths%"
-    - "  &d⚑ &fClan&7: %clans_name%"
+    - "   &e$ &fMoedas&7: &aMOEDAS"
+    - "   &b⚡ &fPoder&7: &bMCMMO"
+    - "   &c⚔ &fKills&7: &c%kills%"
+    - "   &4☠ &fMortes&7: &4%deaths%"
+    - "   &d⚑ &fClan&7: %clans_name%"
     - ""
     - " &2🌍 &fMundo&7: &2%world%"
     - " └&e🧭 &f/rtp"
     - ""
-    - "    &6REDEGLOW.COM"
+    - "     &7RedeGlow.com"
 
 # Configuração base da animação do título.
 # O efeito selecionado em "efeito-score" controla o comportamento visual.
