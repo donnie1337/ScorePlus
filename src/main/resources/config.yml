@@ -39,7 +39,7 @@ scoreboard:
     - ""
     - "┌&7%player%"
     - "   &e$ &fMoedas&7: &aMOEDAS"
-    - "   &b⚡ &fPoder&7: &bMCMMO"
+    - "   &b⚡ &fPoder&7: &b%mcmmo_power%"
     - "   &c⚔ &fKills&7: &c%kills%"
     - "   &4☠ &fMortes&7: &4%deaths%"
     - "   &d⚑ &fClan&7: %clans_name%"
