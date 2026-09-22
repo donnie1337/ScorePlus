@@ -52,6 +52,10 @@ public class PlaceholderUtil {
         // Integração nativa com ClanPlus.
         line = line.replace("%clans_name%", getClanTag(player));
 
+        // Integração opcional com HabilidadesPlus (MCMMO).
+        // A reflexão mantém o ScorePlus independente do plugin.
+        line = line.replace("%mcmmo_power%", String.valueOf(getMcmmoPowerLevel(player)));
+
         if (plugin.getConfig().getBoolean("use-placeholderapi", true)
                 && Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             line = applyPlaceholderApi(player, line);
@@ -70,6 +74,33 @@ public class PlaceholderUtil {
             case "world_the_end" -> "End";
             default -> Character.toUpperCase(worldName.charAt(0)) + worldName.substring(1);
         };
+    }
+
+    private int getMcmmoPowerLevel(Player player) {
+        try {
+            var habilidadesPlus = Bukkit.getPluginManager().getPlugin("HabilidadesPlus");
+            if (habilidadesPlus == null || !habilidadesPlus.isEnabled()) {
+                return 0;
+            }
+
+            Method getDataManager = habilidadesPlus.getClass().getMethod("getDataManager");
+            Object dataManager = getDataManager.invoke(habilidadesPlus);
+            if (dataManager == null) {
+                return 0;
+            }
+
+            Method getProfile = dataManager.getClass().getMethod("getProfile", java.util.UUID.class);
+            Object profile = getProfile.invoke(dataManager, player.getUniqueId());
+            if (profile == null) {
+                return 0;
+            }
+
+            Method getPowerLevel = profile.getClass().getMethod("getPowerLevel");
+            Object powerLevel = getPowerLevel.invoke(profile);
+            return powerLevel instanceof Number number ? number.intValue() : 0;
+        } catch (Throwable ignored) {
+            return 0;
+        }
     }
 
     private String getClanTag(Player player) {
