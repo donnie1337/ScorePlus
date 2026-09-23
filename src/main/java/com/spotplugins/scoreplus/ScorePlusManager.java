@@ -24,10 +24,7 @@ public class ScorePlusManager {
     private final Map<UUID, Sidebar> sidebars = new ConcurrentHashMap<>();
     private final Map<UUID, List<String>> renderedLines = new ConcurrentHashMap<>();
     private final Map<UUID, String> renderedTitles = new ConcurrentHashMap<>();
-    private final LegacyComponentSerializer legacy = LegacyComponentSerializer.builder()
-            .character('&')
-            .hexColors()
-            .build();
+    private final LegacyComponentSerializer legacy = LegacyComponentSerializer.legacySection();
     private ScoreboardLibrary scoreboardLibrary;
     private int titleFrame;
     private int tickCounter;
@@ -88,7 +85,7 @@ public class ScorePlusManager {
         String title = currentTitle();
         String previousTitle = renderedTitles.get(player.getUniqueId());
         if (!title.equals(previousTitle)) {
-            sidebar.title(legacy.deserialize(title));
+            sidebar.title(legacy.deserialize(toSectionCodes(title)));
             renderedTitles.put(player.getUniqueId(), title);
         }
     }
@@ -191,7 +188,7 @@ public class ScorePlusManager {
                 continue;
             }
 
-            sidebar.line(i, rendered == null ? null : legacy.deserialize(rendered));
+            sidebar.line(i, rendered == null ? null : legacy.deserialize(toSectionCodes(rendered)));
 
             while (previousLines.size() <= i) {
                 previousLines.add(null);
@@ -648,6 +645,13 @@ public class ScorePlusManager {
                 Integer.parseInt(hex.substring(2, 4), 16),
                 Integer.parseInt(hex.substring(4, 6), 16)
         };
+    }
+
+    private String toSectionCodes(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        return text.replace('&', '§');
     }
 
     private String truncate(String text, int max) {
