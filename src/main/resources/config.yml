@@ -47,7 +47,7 @@ scoreboard:
     - " &2🌍 &fMundo&7: &2%world%"
     - " └&e🧭 &f/rtp"
     - ""
-    - "&8██████████████ &a&lSURVIVAL &8██████████████"
+    - "     &a&lSURVIVAL"
 
 # Configuração base da animação do título.
 # O efeito selecionado em "efeito-score" controla apenas o SURVIVAL no rodapé; o título REDE EDGE permanece fixo.
