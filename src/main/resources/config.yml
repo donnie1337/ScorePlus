@@ -10,9 +10,9 @@ title-animation-enabled: true
 use-placeholderapi: true
 
 # =====================================================
-#  EFEITOS DO TÍTULO
+#  EFEITOS DO SURVIVAL
 # =====================================================
-# Escolha aqui o efeito utilizado no SURVIVAL.
+# Escolha aqui o efeito utilizado no SURVIVAL no rodapé da scoreboard.
 # Use "alternar" para passar automaticamente pelos 9 efeitos.
 #
 # Eventos disponíveis:
@@ -32,7 +32,7 @@ efeito-score-duracao-segundos: 2
 
 scoreboard:
   title-frames:
-    - " &a&lSURVIVAL"
+    - " <gradient:#B19CD8:#BEA9DF>&lREDE EDGE</gradient>"
 
   lines:
     - "    &7(&f%date%&7) "
@@ -47,10 +47,10 @@ scoreboard:
     - " &2🌍 &fMundo&7: &2%world%"
     - " └&e🧭 &f/rtp"
     - ""
-    - "     &7RedeGlow.com"
+    - "     &a&lSURVIVAL"
 
 # Configuração base da animação do título.
-# O efeito selecionado em "efeito-score" controla o comportamento visual.
+# O efeito selecionado em "efeito-score" controla apenas o SURVIVAL no rodapé; o título REDE EDGE permanece fixo.
 title-animation-interval-seconds: 10
 title-animation-white-ms: 250
 title-animation-normal-ms: 250
