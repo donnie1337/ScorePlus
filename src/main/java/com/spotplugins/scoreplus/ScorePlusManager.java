@@ -24,7 +24,10 @@ public class ScorePlusManager {
     private final Map<UUID, Sidebar> sidebars = new ConcurrentHashMap<>();
     private final Map<UUID, List<String>> renderedLines = new ConcurrentHashMap<>();
     private final Map<UUID, String> renderedTitles = new ConcurrentHashMap<>();
-    private final LegacyComponentSerializer legacy = LegacyComponentSerializer.legacyAmpersand();
+    private final LegacyComponentSerializer legacy = LegacyComponentSerializer.builder()
+            .character('&')
+            .hexColors()
+            .build();
     private ScoreboardLibrary scoreboardLibrary;
     private int titleFrame;
     private int tickCounter;
