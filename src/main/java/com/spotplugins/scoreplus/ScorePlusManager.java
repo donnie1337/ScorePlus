@@ -357,8 +357,6 @@ public class ScorePlusManager {
         }
 
         return colorSurvivalEffect(title, weights);
-
-        return colorSurvivalEffect(title, weights);
     }
 
     private String colorSurvivalEffect(String title, double[] weights) {
