@@ -73,7 +73,7 @@ public class ScorePlusManager {
         if (!plugin.getConfig().getBoolean("title-animation-enabled", false)) return;
         if (titleAnimationStartMillis == 0L) titleAnimationStartMillis = System.currentTimeMillis();
         for (Player player : plugin.getServer().getOnlinePlayers()) {
-            if (isEnabledFor(player)) updateTitle(player);
+            if (isEnabledFor(player)) update(player);
         }
     }
 
@@ -178,7 +178,7 @@ public class ScorePlusManager {
 
         for (int i = 0; i < MAX_LINES; i++) {
             String rendered = i < configuredLines.size()
-                    ? renderLine(player, configuredLines.get(i))
+                    ? renderLine(player, configuredLines.get(i), i)
                     : null;
 
             String previous = i < previousLines.size() ? previousLines.get(i) : null;
@@ -217,15 +217,21 @@ public class ScorePlusManager {
         return lines;
     }
 
-    private String renderLine(Player player, String line) {
-        return truncate(placeholders.apply(player, line), 128);
+    private String renderLine(Player player, String line, int lineIndex) {
+        String rendered = placeholders.apply(player, line);
+        if (rendered.toUpperCase(java.util.Locale.ROOT).contains("SURVIVAL")) {
+            rendered = applyConfiguredSurvivalEffect(rendered);
+        }
+        return truncate(rendered, 128);
     }
 
     private String currentTitle() {
         List<String> frames = plugin.getConfig().getStringList("scoreboard.title-frames");
-        String title = frames.isEmpty() ? "&a&lSURVIVAL" : frames.get(titleFrame % frames.size());
-        title = truncate(title, 128);
+        String title = frames.isEmpty() ? "" : frames.get(0);
+        return truncate(title, 128);
+    }
 
+    private String applyConfiguredSurvivalEffect(String title) {
         if (!plugin.getConfig().getBoolean("title-animation-enabled", false)) {
             return title;
         }
@@ -349,6 +355,8 @@ public class ScorePlusManager {
                 return title;
             }
         }
+
+        return colorSurvivalEffect(title, weights);
 
         return colorSurvivalEffect(title, weights);
     }
