@@ -399,9 +399,8 @@ public class ScorePlusManager {
                         255, 255, 255,
                         weight
                 )));
-                if (bold) {
-                    rendered.append("&l");
-                }
+                // SURVIVAL permanece em negrito durante todos os efeitos.
+                rendered.append("&l");
             }
 
             rendered.append(c);
@@ -619,7 +618,7 @@ public class ScorePlusManager {
                     progress
             )));
             if (!activeFormatting.isEmpty()) {
-                result.append(activeFormatting);
+                result.append('&').append(activeFormatting);
             }
             result.appendCodePoint(codePoint);
 
