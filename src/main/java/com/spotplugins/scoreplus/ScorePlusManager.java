@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ScorePlusManager {
     private static final int MAX_LINES = 15;
@@ -218,17 +220,17 @@ public class ScorePlusManager {
     }
 
     private String renderLine(Player player, String line, int lineIndex) {
-        String rendered = placeholders.apply(player, line);
-        if (rendered.toUpperCase(java.util.Locale.ROOT).contains("SURVIVAL")) {
+        String rendered = applyGradients(placeholders.apply(player, line));
+        if (stripLegacyFormatting(rendered).toUpperCase(java.util.Locale.ROOT).contains("SURVIVAL")) {
             rendered = applyConfiguredSurvivalEffect(rendered);
         }
-        return truncate(rendered, 128);
+        return rendered;
     }
 
     private String currentTitle() {
         List<String> frames = plugin.getConfig().getStringList("scoreboard.title-frames");
         String title = frames.isEmpty() ? "" : frames.get(0);
-        return truncate(title, 128);
+        return applyGradients(title);
     }
 
     private String applyConfiguredSurvivalEffect(String title) {
@@ -553,6 +555,96 @@ public class ScorePlusManager {
                 (rgb[0] >> 4) & 0xF, rgb[0] & 0xF,
                 (rgb[1] >> 4) & 0xF, rgb[1] & 0xF,
                 (rgb[2] >> 4) & 0xF, rgb[2] & 0xF);
+    }
+
+    private String applyGradients(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+
+        Pattern pattern = Pattern.compile("<gradient:(#[0-9a-fA-F]{6}):(#[0-9a-fA-F]{6})>(.*?)</gradient>", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(text);
+        StringBuffer result = new StringBuffer();
+
+        while (matcher.find()) {
+            int[] start = parseHexColor(matcher.group(1));
+            int[] end = parseHexColor(matcher.group(2));
+            matcher.appendReplacement(result, Matcher.quoteReplacement(colorGradientText(matcher.group(3), start, end)));
+        }
+
+        matcher.appendTail(result);
+        return result.toString();
+    }
+
+    private String colorGradientText(String text, int[] start, int[] end) {
+        int visibleLength = stripLegacyFormatting(text).codePointCount(0, stripLegacyFormatting(text).length());
+        if (visibleLength == 0) {
+            return "";
+        }
+
+        StringBuilder result = new StringBuilder(text.length() + visibleLength * 14);
+        int visibleIndex = 0;
+        String activeFormatting = "";
+
+        for (int i = 0; i < text.length();) {
+            int codePoint = text.codePointAt(i);
+            int charCount = Character.charCount(codePoint);
+
+            if (codePoint == '&' && i + 1 < text.length()) {
+                char code = text.charAt(i + 1);
+                if ("klmnoKLMNO".indexOf(code) >= 0) {
+                    activeFormatting = addFormatting(activeFormatting, Character.toLowerCase(code));
+                    result.append('&').append(code);
+                    i += 2;
+                    continue;
+                }
+                if (code == 'r' || code == 'R') {
+                    activeFormatting = "";
+                    result.append('&').append(code);
+                    i += 2;
+                    continue;
+                }
+                result.append('&').append(code);
+                i += 2;
+                continue;
+            }
+
+            double progress = visibleLength <= 1
+                    ? 0.0
+                    : (double) visibleIndex / (double) (visibleLength - 1);
+
+            result.append(toHexColor(interpolateColor(
+                    start[0], start[1], start[2],
+                    end[0], end[1], end[2],
+                    progress
+            )));
+            if (!activeFormatting.isEmpty()) {
+                result.append(activeFormatting);
+            }
+            result.appendCodePoint(codePoint);
+
+            visibleIndex++;
+            i += charCount;
+        }
+
+        return result.toString();
+    }
+
+    private String addFormatting(String current, char code) {
+        String normalized = String.valueOf(code);
+        if (current.indexOf(normalized) >= 0) {
+            return current;
+        }
+        return current + normalized;
+    }
+
+    private int[] parseHexColor(String value) {
+        String hex = value.substring(1);
+        return new int[] {
+                Integer.parseInt(hex.substring(0, 2), 16),
+                Integer.parseInt(hex.substring(2, 4), 16),
+                Integer.parseInt(hex.substring(4, 6), 16)
+        };
     }
 
     private String truncate(String text, int max) {
