@@ -171,7 +171,7 @@ public class ScorePlusManager {
         String title = currentTitle();
         String previousTitle = renderedTitles.get(id);
         if (!title.equals(previousTitle)) {
-            sidebar.title(legacy.deserialize(title));
+            sidebar.title(legacy.deserialize(toSectionCodes(title)));
             renderedTitles.put(id, title);
         }
 
