@@ -56,7 +56,9 @@ public class PlaceholderUtil {
 
         // Integração nativa opcional com EconomiaPlus/CoinsEconomy.
         // A reflexão mantém o ScorePlus compilável mesmo sem o plugin de economia.
-        line = line.replace("%coins%", getCoinsBalance(player));
+        String economyBalance = getCoinsBalance(player);
+        line = line.replace("%coins%", economyBalance);
+        line = line.replace("%moedas%", economyBalance);
 
         // Integração opcional com HabilidadesPlus (MCMMO).
         // A reflexão mantém o ScorePlus independente do plugin.

@@ -34,11 +34,17 @@ scoreboard:
   title-frames:
     - " <gradient:#B19CD8:#BEA9DF>&lREDE EDGE</gradient>"
 
+  economy-cycle:
+    # Alterna entre Coins e Moedas no mesmo espaço da scoreboard.
+    interval-seconds: 5
+    coins-format: "   &a$ &fCoins&7: &a%coins%"
+    moedas-format: "   &6✪ &fMoedas&7: &6%moedas%"
+
   lines:
     - "    &7(&f%date%&7) "
     - ""
     - "┌&7%player%"
-    - "   &e$ &fMoedas&7: &a%coins%"
+    - "%economy_line%"
     - "   &b⚡ &fPoder&7: &b%mcmmo_power%"
     - "   &c⚔ &fKills&7: &c%kills%"
     - "   &4☠ &fMortes&7: &4%deaths%"

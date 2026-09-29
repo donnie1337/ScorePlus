@@ -29,6 +29,7 @@ public class ScorePlusManager {
     private int titleFrame;
     private int tickCounter;
     private long titleAnimationStartMillis;
+    private long economyCycleStartMillis;
 
     public ScorePlusManager(ScorePlus plugin) {
         this.plugin = plugin;
@@ -36,6 +37,7 @@ public class ScorePlusManager {
     }
 
     public void initialize() {
+        economyCycleStartMillis = System.currentTimeMillis();
         try {
             scoreboardLibrary = ScoreboardLibrary.loadScoreboardLibrary(plugin);
         } catch (NoPacketAdapterAvailableException exception) {
@@ -61,6 +63,7 @@ public class ScorePlusManager {
         titleFrame = 0;
         tickCounter = 0;
         titleAnimationStartMillis = System.currentTimeMillis();
+        economyCycleStartMillis = System.currentTimeMillis();
         renderedTitles.clear();
         renderedLines.clear();
 
@@ -220,11 +223,41 @@ public class ScorePlusManager {
     }
 
     private String renderLine(Player player, String line, int lineIndex) {
-        String rendered = applyGradients(placeholders.apply(player, line));
+        String source = line;
+        if (source.contains("%economy_line%")) {
+            source = currentEconomyLine();
+        }
+
+        String rendered = applyGradients(placeholders.apply(player, source));
         if (stripLegacyFormatting(rendered).toUpperCase(java.util.Locale.ROOT).contains("SURVIVAL")) {
             rendered = applyConfiguredSurvivalEffect(rendered);
         }
         return rendered;
+    }
+
+    private String currentEconomyLine() {
+        if (economyCycleStartMillis == 0L) {
+            economyCycleStartMillis = System.currentTimeMillis();
+        }
+
+        long intervalMillis = Math.max(1L,
+                plugin.getConfig().getLong("scoreboard.economy-cycle.interval-seconds", 5L)) * 1000L;
+        long phase = Math.floorDiv(
+                Math.max(0L, System.currentTimeMillis() - economyCycleStartMillis),
+                intervalMillis
+        );
+
+        if ((phase & 1L) == 0L) {
+            return plugin.getConfig().getString(
+                    "scoreboard.economy-cycle.coins-format",
+                    "   &a$ &fCoins&7: &a%coins%"
+            );
+        }
+
+        return plugin.getConfig().getString(
+                "scoreboard.economy-cycle.moedas-format",
+                "   &6✪ &fMoedas&7: &6%moedas%"
+        );
     }
 
     private String currentTitle() {
