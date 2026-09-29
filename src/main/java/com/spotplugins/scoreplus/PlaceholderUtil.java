@@ -6,8 +6,10 @@ import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Method;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 /**
  * Resolve placeholders internos do plugin, PlaceholderAPI e integrações opcionais.
@@ -52,6 +54,10 @@ public class PlaceholderUtil {
         // Integração nativa com ClanPlus.
         line = line.replace("%clans_name%", getClanTag(player));
 
+        // Integração nativa opcional com EconomiaPlus/CoinsEconomy.
+        // A reflexão mantém o ScorePlus compilável mesmo sem o plugin de economia.
+        line = line.replace("%coins%", getCoinsBalance(player));
+
         // Integração opcional com HabilidadesPlus (MCMMO).
         // A reflexão mantém o ScorePlus independente do plugin.
         line = line.replace("%mcmmo_power%", String.valueOf(getMcmmoPowerLevel(player)));
@@ -74,6 +80,37 @@ public class PlaceholderUtil {
             case "world_the_end" -> "End";
             default -> Character.toUpperCase(worldName.charAt(0)) + worldName.substring(1);
         };
+    }
+
+    private String getCoinsBalance(Player player) {
+        try {
+            var economyPlugin = Bukkit.getPluginManager().getPlugin("CoinsEconomy");
+            if (economyPlugin == null) {
+                economyPlugin = Bukkit.getPluginManager().getPlugin("EconomiaPlus");
+            }
+            if (economyPlugin == null || !economyPlugin.isEnabled()) {
+                return "0,00";
+            }
+
+            Method getEconomyManager = economyPlugin.getClass().getMethod("getEconomyManager");
+            Object economyManager = getEconomyManager.invoke(economyPlugin);
+            if (economyManager == null) {
+                return "0,00";
+            }
+
+            Method getSaldo = economyManager.getClass().getMethod("getSaldo", java.util.UUID.class);
+            Object saldo = getSaldo.invoke(economyManager, player.getUniqueId());
+            if (!(saldo instanceof Number number)) {
+                return "0,00";
+            }
+
+            NumberFormat format = NumberFormat.getNumberInstance(Locale.of("pt", "BR"));
+            format.setMinimumFractionDigits(2);
+            format.setMaximumFractionDigits(2);
+            return format.format(number.doubleValue());
+        } catch (Throwable ignored) {
+            return "0,00";
+        }
     }
 
     private int getMcmmoPowerLevel(Player player) {

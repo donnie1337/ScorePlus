@@ -38,7 +38,7 @@ scoreboard:
     - "    &7(&f%date%&7) "
     - ""
     - "┌&7%player%"
-    - "   &e$ &fMoedas&7: &aMOEDAS"
+    - "   &e$ &fMoedas&7: &a%coins%"
     - "   &b⚡ &fPoder&7: &b%mcmmo_power%"
     - "   &c⚔ &fKills&7: &c%kills%"
     - "   &4☠ &fMortes&7: &4%deaths%"
