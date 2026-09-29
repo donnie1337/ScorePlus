@@ -106,10 +106,18 @@ public class PlaceholderUtil {
                 return "0,00";
             }
 
+            double value = number.doubleValue();
             NumberFormat format = NumberFormat.getNumberInstance(Locale.of("pt", "BR"));
-            format.setMinimumFractionDigits(2);
-            format.setMaximumFractionDigits(2);
-            return format.format(number.doubleValue());
+
+            if (Math.abs(value - Math.rint(value)) < 0.0000001) {
+                format.setMinimumFractionDigits(0);
+                format.setMaximumFractionDigits(0);
+            } else {
+                format.setMinimumFractionDigits(0);
+                format.setMaximumFractionDigits(2);
+            }
+
+            return format.format(value);
         } catch (Throwable ignored) {
             return "0,00";
         }
