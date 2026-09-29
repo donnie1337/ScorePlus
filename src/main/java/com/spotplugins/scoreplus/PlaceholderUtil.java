@@ -106,21 +106,47 @@ public class PlaceholderUtil {
                 return "0,00";
             }
 
-            double value = number.doubleValue();
-            NumberFormat format = NumberFormat.getNumberInstance(Locale.of("pt", "BR"));
-
-            if (Math.abs(value - Math.rint(value)) < 0.0000001) {
-                format.setMinimumFractionDigits(0);
-                format.setMaximumFractionDigits(0);
-            } else {
-                format.setMinimumFractionDigits(0);
-                format.setMaximumFractionDigits(2);
-            }
-
-            return format.format(value);
+            return formatCompactBalance(number.doubleValue());
         } catch (Throwable ignored) {
             return "0,00";
         }
+    }
+
+    private String formatCompactBalance(double value) {
+        double abs = Math.abs(value);
+
+        if (abs >= 1_000_000_000_000.0) {
+            return formatCompactNumber(value / 1_000_000_000_000.0) + "T";
+        }
+        if (abs >= 1_000_000_000.0) {
+            return formatCompactNumber(value / 1_000_000_000.0) + "B";
+        }
+        if (abs >= 1_000_000.0) {
+            return formatCompactNumber(value / 1_000_000.0) + "M";
+        }
+        if (abs >= 1_000.0) {
+            return formatCompactNumber(value / 1_000.0) + "K";
+        }
+
+        return formatCompactNumber(value);
+    }
+
+    private String formatCompactNumber(double value) {
+        NumberFormat format = NumberFormat.getNumberInstance(Locale.of("pt", "BR"));
+        format.setMinimumFractionDigits(0);
+
+        double rounded = Math.rint(value);
+        if (Math.abs(value - rounded) < 0.0000001) {
+            format.setMaximumFractionDigits(0);
+        } else if (Math.abs(value) >= 100.0) {
+            format.setMaximumFractionDigits(0);
+        } else if (Math.abs(value) >= 10.0) {
+            format.setMaximumFractionDigits(1);
+        } else {
+            format.setMaximumFractionDigits(2);
+        }
+
+        return format.format(value);
     }
 
     private int getMcmmoPowerLevel(Player player) {
