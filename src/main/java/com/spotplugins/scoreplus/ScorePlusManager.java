@@ -179,13 +179,18 @@ public class ScorePlusManager {
         }
 
         List<String> configuredLines = getConfiguredLines();
+        List<String> currentLines = new ArrayList<>(MAX_LINES);
+        for (int i = 0; i < MAX_LINES; i++) {
+            currentLines.add(i < configuredLines.size()
+                    ? renderLine(player, configuredLines.get(i), i)
+                    : null);
+        }
+        centerSurvivalFooter(currentLines);
+
         List<String> previousLines = renderedLines.computeIfAbsent(id, ignored -> new ArrayList<>());
 
         for (int i = 0; i < MAX_LINES; i++) {
-            String rendered = i < configuredLines.size()
-                    ? renderLine(player, configuredLines.get(i), i)
-                    : null;
-
+            String rendered = currentLines.get(i);
             String previous = i < previousLines.size() ? previousLines.get(i) : null;
             if (java.util.Objects.equals(rendered, previous)) {
                 continue;
@@ -235,6 +240,58 @@ public class ScorePlusManager {
         return rendered;
     }
 
+    private void centerSurvivalFooter(List<String> lines) {
+        if (lines == null || lines.isEmpty()) return;
+
+        int survivalIndex = -1;
+        int maxWidth = 0;
+
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            if (line == null) continue;
+
+            String visible = stripLegacyFormatting(line);
+            if (visible.toUpperCase(java.util.Locale.ROOT).contains("SURVIVAL")) {
+                survivalIndex = i;
+                continue;
+            }
+
+            maxWidth = Math.max(maxWidth, visiblePixelWidth(visible));
+        }
+
+        if (survivalIndex < 0 || maxWidth <= 0) return;
+
+        String original = lines.get(survivalIndex);
+        String withoutFixedPadding = original.replaceFirst("^ +", "");
+        int survivalWidth = visiblePixelWidth(stripLegacyFormatting(withoutFixedPadding));
+        int leftPixels = Math.max(0, (maxWidth - survivalWidth) / 2);
+        int spaces = Math.max(0, Math.round(leftPixels / 4.0f));
+
+        lines.set(survivalIndex, " ".repeat(spaces) + withoutFixedPadding);
+    }
+
+    private int visiblePixelWidth(String text) {
+        if (text == null || text.isEmpty()) return 0;
+        int width = 0;
+        for (int i = 0; i < text.length();) {
+            int codePoint = text.codePointAt(i);
+            width += glyphWidth(codePoint);
+            i += Character.charCount(codePoint);
+        }
+        return width;
+    }
+
+    private int glyphWidth(int codePoint) {
+        if (codePoint == 32) return 4;
+        if (codePoint == 33 || codePoint == 46 || codePoint == 44 || codePoint == 58
+                || codePoint == 59 || codePoint == 124 || codePoint == 105 || codePoint == 108
+                || codePoint == 73) return 2;
+        if (codePoint == 96) return 3;
+        if (codePoint == 116 || codePoint == 91 || codePoint == 93 || codePoint == 40
+                || codePoint == 41 || codePoint == 123 || codePoint == 125 || codePoint == 42) return 4;
+        if (codePoint == 60 || codePoint == 62 || codePoint == 102 || codePoint == 107) return 5;
+        return 6;
+    }
     private String currentEconomyLine() {
         if (economyCycleStartMillis == 0L) {
             economyCycleStartMillis = System.currentTimeMillis();
