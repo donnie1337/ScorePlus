@@ -244,7 +244,7 @@ public class ScorePlusManager {
         if (lines == null || lines.isEmpty()) return;
 
         int survivalIndex = -1;
-        int maxWidth = 0;
+        int maxWidth = formattedPixelWidth(currentTitle());
 
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
@@ -256,41 +256,77 @@ public class ScorePlusManager {
                 continue;
             }
 
-            maxWidth = Math.max(maxWidth, visiblePixelWidth(visible));
+            maxWidth = Math.max(maxWidth, formattedPixelWidth(line));
         }
 
         if (survivalIndex < 0 || maxWidth <= 0) return;
 
         String original = lines.get(survivalIndex);
         String withoutFixedPadding = original.replaceFirst("^ +", "");
-        int survivalWidth = visiblePixelWidth(stripLegacyFormatting(withoutFixedPadding));
+        int survivalWidth = formattedPixelWidth(withoutFixedPadding);
+
         int leftPixels = Math.max(0, (maxWidth - survivalWidth) / 2);
         int spaces = Math.max(0, Math.round(leftPixels / 4.0f));
 
         lines.set(survivalIndex, " ".repeat(spaces) + withoutFixedPadding);
     }
 
-    private int visiblePixelWidth(String text) {
+    /**
+     * Mede a largura visual usando as metricas aproximadas da fonte vanilla,
+     * preservando o efeito de negrito. Cores legacy e RGB nao ocupam pixels.
+     */
+    private int formattedPixelWidth(String text) {
         if (text == null || text.isEmpty()) return 0;
+
         int width = 0;
+        boolean bold = false;
+
         for (int i = 0; i < text.length();) {
+            char c = text.charAt(i);
+
+            if ((c == '&' || c == '§') && i + 1 < text.length()) {
+                char code = Character.toLowerCase(text.charAt(i + 1));
+
+                if (code == 'x') {
+                    int rgbEnd = i + 14;
+                    if (rgbEnd <= text.length()) {
+                        i = rgbEnd;
+                        bold = false;
+                        continue;
+                    }
+                }
+
+                if (code == 'l') {
+                    bold = true;
+                } else if (code == 'r' || isLegacyColorCode(code)) {
+                    bold = false;
+                }
+
+                i += 2;
+                continue;
+            }
+
             int codePoint = text.codePointAt(i);
-            width += glyphWidth(codePoint);
+            int glyph = glyphWidth(codePoint);
+            width += glyph;
+            if (bold && codePoint != ' ' && glyph > 0) {
+                width += 1;
+            }
             i += Character.charCount(codePoint);
         }
+
         return width;
     }
 
     private int glyphWidth(int codePoint) {
-        if (codePoint == 32) return 4;
-        if (codePoint == 33 || codePoint == 46 || codePoint == 44 || codePoint == 58
-                || codePoint == 59 || codePoint == 124 || codePoint == 105 || codePoint == 108
-                || codePoint == 73) return 2;
-        if (codePoint == 96) return 3;
-        if (codePoint == 116 || codePoint == 91 || codePoint == 93 || codePoint == 40
-                || codePoint == 41 || codePoint == 123 || codePoint == 125 || codePoint == 42) return 4;
-        if (codePoint == 60 || codePoint == 62 || codePoint == 102 || codePoint == 107) return 5;
-        return 6;
+        return switch (codePoint) {
+            case ' ' -> 4;
+            case '!', '.', ',', ':', ';', '|', 'i' -> 2;
+            case '\'', 'l' -> 3;
+            case 'I', 't', '[', ']', '(', ')', '{', '}', '"' -> 4;
+            case 'f', 'k', '<', '>', '*' -> 5;
+            default -> 6;
+        };
     }
     private String currentEconomyLine() {
         if (economyCycleStartMillis == 0L) {
