@@ -318,6 +318,12 @@ public class ScorePlusManager {
         return width;
     }
 
+    private boolean isLegacyColorCode(char code) {
+        return (code >= '0' && code <= '9')
+                || (code >= 'a' && code <= 'f')
+                || (code >= 'A' && code <= 'F');
+    }
+
     private int glyphWidth(int codePoint) {
         return switch (codePoint) {
             case ' ' -> 4;
