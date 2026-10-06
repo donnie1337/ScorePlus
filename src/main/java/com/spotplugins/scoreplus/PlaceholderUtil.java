@@ -80,6 +80,7 @@ public class PlaceholderUtil {
         return switch (worldName.toLowerCase(java.util.Locale.ROOT)) {
             case "world_nether" -> "Nether";
             case "world_the_end" -> "End";
+            case "mining" -> "Mineração";
             default -> Character.toUpperCase(worldName.charAt(0)) + worldName.substring(1);
         };
     }
