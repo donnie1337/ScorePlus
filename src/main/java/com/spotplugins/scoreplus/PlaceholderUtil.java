@@ -17,7 +17,7 @@ import java.util.Locale;
  */
 public class PlaceholderUtil {
 
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yy");
 
     private final ScorePlus plugin;
 
