@@ -56,9 +56,10 @@ public class PlaceholderUtil {
 
         // Integração nativa opcional com EconomiaPlus/CoinsEconomy.
         // A reflexão mantém o ScorePlus compilável mesmo sem o plugin de economia.
-        String economyBalance = getCoinsBalance(player);
-        line = line.replace("%coins%", economyBalance);
-        line = line.replace("%moedas%", economyBalance);
+        String coinsBalance = getCoinsBalance(player);
+        String moedasBalance = getMoedasBalance(player);
+        line = line.replace("%coins%", coinsBalance);
+        line = line.replace("%moedas%", moedasBalance);
 
         // Integração opcional com HabilidadesPlus (MCMMO).
         // A reflexão mantém o ScorePlus independente do plugin.
@@ -84,6 +85,13 @@ public class PlaceholderUtil {
             case "mining" -> "Mineração";
             default -> Character.toUpperCase(worldName.charAt(0)) + worldName.substring(1);
         };
+    }
+
+    private String getMoedasBalance(Player player) {
+        // A moeda secundária ainda não possui um sistema próprio ativo.
+        // Mantemos o placeholder separado de Coins para impedir que a
+        // scoreboard exiba o mesmo saldo nas duas economias.
+        return "0";
     }
 
     private String getCoinsBalance(Player player) {
