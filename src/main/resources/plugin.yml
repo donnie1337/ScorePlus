@@ -4,7 +4,7 @@ main: com.spotplugins.scoreplus.ScorePlus
 api-version: '1.21'
 author: SeuNome
 description: Scoreboard customizável com título animado e placeholders configuráveis.
-softdepend: [ClanPlus, CoinsEconomy, EconomiaPlus, PlaceholderAPI, ViaVersion]
+softdepend: [ClanPlus, CoinsEconomy, EconomiaPlus, PlaceholderAPI, ViaVersion, TerrenosPlus]
 
 commands:
   scoreboard:
