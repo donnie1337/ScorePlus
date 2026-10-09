@@ -51,7 +51,7 @@ scoreboard:
     - "   &d⚑ &fClan&7: %clans_name%"
     - ""
     - " &2🌍 &fMundo&7: &2%world%"
-    - " &e🧭 &f%terrain_owner_or_rtp%"
+    - "  &e🧭 &f%terrain_owner_or_rtp%"
     - ""
     - "&a&lSURVIVAL"
 
