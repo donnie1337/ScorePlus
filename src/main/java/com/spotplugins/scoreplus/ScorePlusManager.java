@@ -229,6 +229,11 @@ public class ScorePlusManager {
 
     private String renderLine(Player player, String line, int lineIndex) {
         String source = line;
+        // Compatibilidade com configs antigas: a linha fixa /rtp passa a ser
+        // dinâmica sem exigir que o administrador apague o config.yml.
+        if (source.contains("/rtp")) {
+            source = source.replace("/rtp", "%terrain_owner_or_rtp%");
+        }
         if (source.contains("%economy_line%")) {
             source = currentEconomyLine();
         }
