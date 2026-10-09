@@ -78,28 +78,28 @@ public class PlaceholderUtil {
         try {
             var terrenosPlus = Bukkit.getPluginManager().getPlugin("TerrenosPlus");
             if (terrenosPlus == null || !terrenosPlus.isEnabled()) {
-                return "/rtp";
+                return "Sem dono";
             }
 
             Method getManager = terrenosPlus.getClass().getMethod("getTerrenoManager");
             Object manager = getManager.invoke(terrenosPlus);
-            if (manager == null) return "/rtp";
+            if (manager == null) return "Sem dono";
 
             Method find = manager.getClass().getMethod("find", org.bukkit.Location.class);
             Object result = find.invoke(manager, player.getLocation());
             if (!(result instanceof java.util.Optional<?> optional) || optional.isEmpty()) {
-                return "/rtp";
+                return "Sem dono";
             }
 
             Object terrain = optional.get();
             Method ownerName = terrain.getClass().getMethod("ownerName");
             Object owner = ownerName.invoke(terrain);
-            if (owner == null) return "/rtp";
+            if (owner == null) return "Sem dono";
 
             String name = String.valueOf(owner).trim();
-            return name.isEmpty() ? "/rtp" : name;
+            return name.isEmpty() ? "Sem dono" : name;
         } catch (Throwable ignored) {
-            return "/rtp";
+            return "Sem dono";
         }
     }
 
