@@ -38,6 +38,7 @@ public class PlaceholderUtil {
         line = line.replace("%online%", String.valueOf(Bukkit.getOnlinePlayers().size()));
         line = line.replace("%maxonline%", String.valueOf(Bukkit.getMaxPlayers()));
         line = line.replace("%date%", LocalDate.now().format(DATE_FORMAT));
+        line = line.replace("%terrain_owner_or_rtp%", getTerrainOwnerOrRtp(player));
 
         int kills = safeStatistic(player, Statistic.PLAYER_KILLS);
         int deaths = safeStatistic(player, Statistic.DEATHS);
@@ -71,6 +72,35 @@ public class PlaceholderUtil {
         }
 
         return ChatColor.translateAlternateColorCodes('&', line);
+    }
+
+    private String getTerrainOwnerOrRtp(Player player) {
+        try {
+            var terrenosPlus = Bukkit.getPluginManager().getPlugin("TerrenosPlus");
+            if (terrenosPlus == null || !terrenosPlus.isEnabled()) {
+                return "/rtp";
+            }
+
+            Method getManager = terrenosPlus.getClass().getMethod("getTerrenoManager");
+            Object manager = getManager.invoke(terrenosPlus);
+            if (manager == null) return "/rtp";
+
+            Method find = manager.getClass().getMethod("find", org.bukkit.Location.class);
+            Object result = find.invoke(manager, player.getLocation());
+            if (!(result instanceof java.util.Optional<?> optional) || optional.isEmpty()) {
+                return "/rtp";
+            }
+
+            Object terrain = optional.get();
+            Method ownerName = terrain.getClass().getMethod("ownerName");
+            Object owner = ownerName.invoke(terrain);
+            if (owner == null) return "/rtp";
+
+            String name = String.valueOf(owner).trim();
+            return name.isEmpty() ? "/rtp" : name;
+        } catch (Throwable ignored) {
+            return "/rtp";
+        }
     }
 
     private String formatWorldName(String worldName) {
